@@ -52,12 +52,12 @@ def secant(f, x0: float, x1: float, a: float, b: float, logs: bool=True, eps: fl
     while abs(cur-prev) >= eps:
         i += 1
         if logs:
-            print(f"i={i}, current={cur}, f(current)={f(cur)}")
+            print(f"i={i}, xi={cur}, f(xi)={f(cur)}")
         cur = step(cur)
     return cur
 
 
-def relax(f, x0: float, a: float, b: float, logs: bool=True, eps: float=1e-5, tau: float=0.3)->float:
+def relax(f, x0: float, a: float, b: float, logs: bool=True, eps: float=1e-5, tau: float=0.35)->float:
     input_check(a, b, x0)
 
     def phi(x):
@@ -73,7 +73,7 @@ def relax(f, x0: float, a: float, b: float, logs: bool=True, eps: float=1e-5, ta
 
 
 a = 0.0
-b = 1.0
+b=1.0
 x0 = 0.4
 x1 = 0.7
 print(newton(f, d, x0, a, b))
