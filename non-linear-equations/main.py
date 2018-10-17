@@ -1,9 +1,15 @@
 #! usr/bin/env python3
 # -*- coding: utf-8 -*-
-#x*e^x-x-1; положительный; Ньютона, секущих, релаксации
+# x*e^x-x-1; положительный; Ньютона, секущих, релаксации
 import math
 import numpy as np
 
+
+def logger(i: int, xi: float, fi: float):
+    print(f"i={i}, xi={xi}, f(xi)={fi}")
+
+def fault(x0,a,b):
+    return abs(b-x0) if f(x0)*f(b) < 0 else abs(a-x0)
 
 def f(x)->float:
     return x*(math.e**x)-x-1
@@ -36,16 +42,25 @@ def newton(f, d, a: float, b: float, x0: float=0, logs: bool=True, eps: float=1e
     :param eps: method accuracy
     :return: approxiamted root
     """
-    input_check(a, b, x0)
-    
+
     if not f(a)*f(b) < 0:
         raise ValueError(f"No root can be found on [{a},{b}]")
-    
+
     if x0 == 0:
-        if f(a)*d2(a)>0:
-            x0=a
-        elif f(b)*d2(b)>0:
-            x0=b
+        if f(a)*d2(a) > 0:
+            x0 = a
+        elif f(b)*d2(b) > 0:
+            x0 = b
+        else:
+            x0 = (a+b)/2
+
+    input_check(a, b, x0)
+
+    x_vals = np.linspace(a, b, min(int(1./eps), 10**5))
+    min_val, max_val = round(np.min(np.abs(d(x_vals))), 6), round(
+        np.max(np.abs(d2(x_vals))), 6)
+    z0 = fault(x0,a,b)
+    q = max_val*z0/(2*min_val)
 
     def step(x):
         return x-f(x)/d(x)
@@ -53,13 +68,22 @@ def newton(f, d, a: float, b: float, x0: float=0, logs: bool=True, eps: float=1e
     xi = x0
     i = 0
 
-    while abs(step(xi)-xi) >= eps:
+    while abs(step(xi)-xi) > eps:
         i += 1
         if logs:
-            print(f"i={i}, xi={xi}, f(xi)={f(xi)}")
+            logger(i, xi, f(xi))
         xi = step(xi)
 
-    return step(xi)
+    if logs:
+        logger(i, xi, f(xi))
+
+    apriori_iter_amount = int(np.ceil(
+        np.log2(1+(np.log(eps/(b-a))/np.log(q))))+1)
+    print(
+        f"Relaxation method. Apriori iteration number: {apriori_iter_amount},",
+        f"aposteriori iteration number: {i}")
+    
+    return xi
 
 
 def secant(f, x0: float, x1: float, a: float, b: float, logs: bool=True, eps: float=1e-5)->float:
@@ -83,11 +107,13 @@ def secant(f, x0: float, x1: float, a: float, b: float, logs: bool=True, eps: fl
         prev = cur
         return next
     i = 0
-    while abs(cur-prev) >= eps:
+    while abs(cur-prev) > eps or abs(f(cur)) > eps:
         i += 1
         if logs:
-            print(f"i={i}, xi={cur}, f(xi)={f(cur)}")
+            logger(i,cur,f(cur))
         cur = step(cur)
+    if logs:
+        logger(i,cur,f(cur))
     return cur
 
 
@@ -104,33 +130,38 @@ def relax(f, x0: float, a: float, b: float, logs: bool=True, eps: float=1e-5)->f
     input_check(a, b, x0)
 
     x_vals = np.linspace(a, b, min(int(1./eps), 10**5))
-    min_val, max_val = np.min(np.abs(d(x_vals))), np.max(np.abs(d(x_vals)))
+    min_val, max_val = round(np.min(np.abs(d(x_vals))), 6), round(
+        np.max(np.abs(d(x_vals))), 6)
     tau = 2./(min_val+max_val)
-    q = (max_val-min_val)/(min_val+max_val)
+    q = round((max_val-min_val)/(min_val+max_val), 6)
 
     def phi(x)->float:
         return x-np.sign(d(x))*tau*f(x)
+
     i = 0
     xi = x0
-    while abs(phi(xi)-xi) >= eps:
+    while abs(phi(xi)-xi) > eps:
         i += 1
         if logs:
-            print(f"i={i}, xi={xi}, f(xi)={f(xi)}")
-            xi=phi(xi)
-
-    apriori_iter_amount = int(np.ceil((np.log(eps*(1-q))/(b-a))/np.log(q))+1)
+            logger(i,xi,f(xi))
+            xi = phi(xi)
+    if logs:
+        logger(i,xi,f(xi))
+    z0 = fault(x0,a,b)
+    apriori_iter_amount = int(
+        np.ceil(np.log(np.abs(z0) / eps) / np.log(1. / q))) + 1
 
     print(
         f"Relaxation method. Apriori iteration number: {apriori_iter_amount},",
         f"aposteriori iteration number: {i}")
 
-    return phi(xi)
+    return xi
 
 
 if __name__ == "__main__":
-    newton_root = newton(f, d, 0.0, 1.0)
-    print("Newton method root: ", newton_root)
-    secant_root = secant(f, 0.4, 0.7, 0., 1.)
+    # newton_root = newton(f, d, 0.7, 1.)
+    # print("Newton method root: ", newton_root)
+    secant_root = secant(f, 0.7, 0.75, 0.7, 1.)
     print("Secant method root: ", secant_root)
-    relaxation_root = relax(f, 0.4, 0.2, 4.0)
-    print("Relaxation method root: ", relaxation_root)
+    # relaxation_root = relax(f, 0.8, 0.7, 1.)
+    # print("Relaxation method root: ", relaxation_root)
