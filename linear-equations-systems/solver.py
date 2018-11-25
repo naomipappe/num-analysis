@@ -47,7 +47,7 @@ def inverse(A):
 
 def square_root_method(matrix, b):
     def cond(matrix):
-        return np.linalg.norm(inverse(matrix),np.inf)*np.linalg.norm(matrix,np.inf)
+        return np.linalg.norm(inverse(matrix),2)*np.linalg.norm(matrix,2)
     n = len(matrix)
     matrix = np.array(matrix)
     b = np.array(b).reshape((n, 1))
@@ -71,15 +71,18 @@ def square_root_method(matrix, b):
     print(inv_matrix)
     print("cond(A)")
     print(cond(matrix))
+    print("Произведение обратной на матрицу системы:")
+    print(np.matmul(inv_matrix,matrix))
     X2 = np.reshape(X2, (n, 1))
     e=b-np.dot(matrix,X2)
     print("Вектор невязки решения:")
     print(e)
+    print("Норма вектора невязки:")
     print(np.linalg.norm(e,np.inf))
     return X2
 
 
-def jacobi(matrix, b, eps=1e-6):
+def jacobi(matrix, b, eps=1e-10):
     def step(x):
         return -np.dot(A, x)-np.dot(B, x)+C
     n = len(matrix)
@@ -97,7 +100,6 @@ def jacobi(matrix, b, eps=1e-6):
     while(np.linalg.norm(step(xi)-xi, np.inf) >= eps):
         i += 1
         xi = step(xi)
-    print(np.linalg.solve(matrix, b))
     print(f"Количество итераций: {i}")
     print("Невязка решения:")
     print(np.dot(matrix, xi)-b)

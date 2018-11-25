@@ -1,0 +1,8 @@
+
+\.idea/
+
+eigenvalues-problem/\.vscode/
+
+eigenvalues-problem/__pycache__/
+
+linear-equations-systems/__pycache__/
