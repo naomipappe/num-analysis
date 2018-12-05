@@ -6,3 +6,13 @@ eigenvalues-problem/\.vscode/
 eigenvalues-problem/__pycache__/
 
 linear-equations-systems/__pycache__/
+
+\.vscode/
+
+*.png
+
+linear-equations-systems/data\.txt
+
+interpolation/__pycache__/
+
+*.txt

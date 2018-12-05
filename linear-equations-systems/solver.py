@@ -1,6 +1,7 @@
 import numpy as np
 np.set_printoptions(10)
 
+
 def decompose(A):
     n = len(A)
     s = 0
@@ -45,9 +46,23 @@ def inverse(A):
     return REV
 
 
+def vec_norm(x):
+    return max(abs(x))
+
+
+def matrix_norm(matrix):
+    max_sum = 0
+    for i in range(len(matrix)):
+        tmp_sum = sum([abs(matrix[i, j]) for j in range(len(matrix))])
+        if tmp_sum > max_sum:
+            max_sum = tmp_sum
+    return max_sum
+
+
 def square_root_method(matrix, b):
+
     def cond(matrix):
-        return np.linalg.norm(inverse(matrix),2)*np.linalg.norm(matrix,2)
+        return matrix_norm(inverse(matrix))*matrix_norm(matrix)
     n = len(matrix)
     matrix = np.array(matrix)
     b = np.array(b).reshape((n, 1))
@@ -72,13 +87,13 @@ def square_root_method(matrix, b):
     print("cond(A)")
     print(cond(matrix))
     print("Произведение обратной на матрицу системы:")
-    print(np.matmul(inv_matrix,matrix))
+    print(np.matmul(inv_matrix, matrix))
     X2 = np.reshape(X2, (n, 1))
-    e=b-np.dot(matrix,X2)
+    e = b-np.dot(matrix, X2)
     print("Вектор невязки решения:")
     print(e)
     print("Норма вектора невязки:")
-    print(np.linalg.norm(e,np.inf))
+    print(vec_norm(e))
     return X2
 
 
@@ -97,7 +112,7 @@ def jacobi(matrix, b, eps=1e-10):
     C = np.matmul(D_inv, b)
     xi = np.zeros_like(b)
     i = 0
-    while(np.linalg.norm(step(xi)-xi, np.inf) >= eps):
+    while(vec_norm(step(xi)-xi) >= eps):
         i += 1
         xi = step(xi)
     print(f"Количество итераций: {i}")

@@ -1,16 +1,16 @@
 import numpy as np
-
+def normalize(x):
+        return x/sum([x[i]**2 for i in range(len(x))])
 
 def scalar_products_method(matrix, eps=1e-6):
     def mu(x, e):
         return np.dot(np.reshape(x, (n,)), np.reshape(e, (n,)))
 
-    def normalize(x):
-        return x/np.linalg.norm(x)
+    
 
     matrix = np.array(matrix)
     n = len(matrix)
-    x0 = np.random.rand(n,1)
+    x0 = np.ones((n, 1))
     e_cur = np.array(normalize(x0))
     x_cur = np.dot(matrix, e_cur)
     mu_cur = mu(x_cur, e_cur)
@@ -28,10 +28,10 @@ def scalar_products_method(matrix, eps=1e-6):
     return lambda_mod_max
 
 
-def power_method(matrix, eps=1e-6):
+def power_method(matrix, eps=1e-8):
     matrix = np.array(matrix)
     n = len(matrix)
-    x0 = np.random.rand(n,1)
+    x0 = normalize(np.random.rand(n,1))
     x_cur = np.dot(matrix, x0)
     mu_cur = x_cur[0]/x0[0]
     while True:
@@ -39,12 +39,12 @@ def power_method(matrix, eps=1e-6):
         mu_next = x_next[0]/x_cur[0]
         if abs(mu_next-mu_cur) <= eps:
             break
-        x_cur = x_next
+        x_cur = normalize(x_next)
         mu_cur = mu_next
     return mu_next[0]
 
 
-def jacobi_turn_method(matrix, eps=1e-6):
+def jacobi_turn_method(matrix, eps=1e-8):
     def indeces(A):
         result = 0
         row = 0
@@ -85,25 +85,31 @@ def jacobi_turn_method(matrix, eps=1e-6):
 
     eigen = np.array(matrix)
     n = len(matrix)
+    i = 0
     while stop(eigen) >= eps:
+        i += 1
         eigen = turn(eigen)
-
+    print("Количество итераций метода обращения Якоби:", i)
     return sorted(np.diag(eigen), reverse=True)
 
 
-def max_module_eigenvalue(matrix, eps=1e-6):
-    return scalar_products_method(matrix, eps)
+def max_module_eigenvalue(matrix, eps=1e-8):
+    return power_method(matrix, eps)
 
 
-def min_module_eigenvalue(matrix, eps=1e-6):
+def min_module_eigenvalue(matrix, eps=1e-8):
     n = len(matrix)
     lamA = max_module_eigenvalue(matrix)
     C = np.eye(n, n)-np.matmul(matrix, matrix)/lamA**2
     return np.sqrt((1-max_module_eigenvalue(C))*lamA**2)
 
 
-def min_eigenvalue(matrix, eps=1e-6):
+def min_eigenvalue(matrix, eps=1e-8):
     n = len(matrix)
-    B = np.linalg.norm(matrix, np.inf)*np.eye(n, n)-matrix
-    lambmin = np.linalg.norm(matrix, np.inf)-max_module_eigenvalue(B)
-    return lambmin
+    E = np.eye(n, n)
+    labmdaA = max_module_eigenvalue(matrix)
+    gamma = labmdaA+1
+    newA = matrix + E*gamma
+    newlambdaA = max_module_eigenvalue(newA)
+    B = newlambdaA*E - newA
+    return newlambdaA-max_module_eigenvalue(B)-gamma
