@@ -15,7 +15,7 @@ def interpolate_newton_equidistant(f, x0,
 
     t = (x0 - a) / h
 
-    x = equidistant_nodes(a, b, h)
+    x = equidistant_nodes(a, b, n)
 
     n = x.shape[0]
 
@@ -49,7 +49,8 @@ def interpolate_newton_chebyshew(f, x0, a, b, n):
     return pnx
 
 
-def equidistant_nodes(a, b, h):
+def equidistant_nodes(a, b, n):
+    h = (b-a)/n
     return np.arange(a, b + h, h)
 
 
@@ -70,7 +71,7 @@ def reverse_Newton(f, y0, a, b, n) -> float:
 
     t = (y0 - a) / h
 
-    x = equidistant_nodes(a, b, h)
+    x = equidistant_nodes(a, b, n)
 
     n = x.shape[0]
 
@@ -85,7 +86,7 @@ def reverse_Newton(f, y0, a, b, n) -> float:
     for k in range(n):
         pnx, nk = pnx + nk * rr[k, 0], nk * (t - k) / (k + 1)
     eps = 0.523
-    x_vals = np.linspace(pnx-eps, pnx+eps,5)
+    x_vals = np.linspace(pnx-eps, pnx+eps, 5)
     y_vals = np.vectorize(f)(x_vals)
     n = y_vals.shape[0]
     rr = np.zeros((n, n))
