@@ -66,37 +66,19 @@ def omega(x, a, b, n, nodes_gen):
     return np.prod([x-nodes[i] for i in range(len(nodes))])
 
 
-def reverse_Newton(f, y0, a, b, n) -> float:
-    h = (b - a) / n
-
-    t = (y0 - a) / h
-
-    x = equidistant_nodes(a, b, n)
-
-    n = x.shape[0]
-
+def reverse_Newton(f, y0, n) -> float:
+    y_new = y0
+    eps = 0.524
+    x_values = np.linspace(y_new-eps, y_new+eps, n)
+    y_values = np.vectorize(f)(x_values)
+    n = y_values.shape[0]
     rr = np.zeros((n, n))
-
-    rr[0] = np.array(x)
-    for i in range(n - 1):
-        rr[i+1, :-1-i] = rr[i, 1:n-i] - rr[i, :-1-i]
-
-    pnx, nk = 0, 1
-
-    for k in range(n):
-        pnx, nk = pnx + nk * rr[k, 0], nk * (t - k) / (k + 1)
-    eps = 0.523
-    x_vals = np.linspace(pnx-eps, pnx+eps, 5)
-    y_vals = np.vectorize(f)(x_vals)
-    n = y_vals.shape[0]
-    rr = np.zeros((n, n))
-    rr[0] = np.array(x_vals)
+    rr[0] = np.array(x_values)
     for i in range(n - 1):
         rr[i+1, :-1-i] = (rr[i, 1:n-i] - rr[i, :-1-i]) / \
-            (y_vals[1+i:] - y_vals[:-1-i])
+            (y_values[1+i:] - y_values[:-1-i])
 
     pnx = rr[n - 1, 0]
-
     for i in range(n - 1)[::-1]:
-        pnx = pnx * (y0 - y_vals[i]) + rr[i, 0]
+        pnx = pnx * (y0 - y_values[i]) + rr[i, 0]
     return pnx
