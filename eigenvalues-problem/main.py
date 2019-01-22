@@ -1,15 +1,23 @@
 import eigen
+import numpy as np
+
+def fill_matrix(A):
+    for i in range(len(A)):
+        for j in range(len(A)):
+            if i == j:
+                A[i][j] = 10+n+(i+j)/(10+n)
+            else:
+                A[i][j] = 2*(i+j)/(10+n)
 
 
-matrix = [[1, 3, -2, 0, -2],
-          [3, 4, -5, 1, -3],
-          [-2, -5, 3, -2, 2],
-          [0, 1, -2, 5, 3],
-          [-2, -3, 2, 3, 4]]
-lambda_max_mod = eigen.max_module_eigenvalue(matrix)
-lambda_min_mod = eigen.min_module_eigenvalue(matrix)
-lambda_min = eigen.min_eigenvalue(matrix)
-lambdas = eigen.jacobi_turn_method(matrix)
+n = int(input("Введите размерность матрицы: "))
+matrix = np.zeros((n, n))
+fill_matrix(matrix)
+eps=1e-5
+lambda_max_mod = eigen.max_module_eigenvalue(matrix,eps)
+lambda_min_mod = eigen.min_module_eigenvalue(matrix,eps)
+lambda_min = eigen.min_eigenvalue(matrix,eps)
+lambdas = eigen.jacobi_turn_method(matrix,eps)
 print("Максимальное по модулю собственное число:", lambda_max_mod)
 print("Минимальное по модулю собственное число:", lambda_min_mod)
 print("Минимальное собственное число:", lambda_min)

@@ -2,6 +2,7 @@ import numpy as np
 def normalize(x):
         return x/sum([x[i]**2 for i in range(len(x))])
 
+
 def scalar_products_method(matrix, eps=1e-6):
     def mu(x, e):
         return np.dot(np.reshape(x, (n,)), np.reshape(e, (n,)))
@@ -20,7 +21,7 @@ def scalar_products_method(matrix, eps=1e-6):
         e_next = normalize(x_cur)
         x_next = np.dot(matrix, e_next)
         mu_next = mu(x_next, e_next)
-        if abs(mu_next-mu_cur) <= eps:
+        if abs(mu_next-mu_cur) < eps:
             break
         x_cur = x_next
         mu_cur = mu_next
@@ -94,7 +95,7 @@ def jacobi_turn_method(matrix, eps=1e-8):
 
 
 def max_module_eigenvalue(matrix, eps=1e-8):
-    return power_method(matrix, eps)
+    return scalar_products_method(matrix, eps)
 
 
 def min_module_eigenvalue(matrix, eps=1e-8):
