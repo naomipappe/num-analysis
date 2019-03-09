@@ -24,7 +24,7 @@ def interpolate_newton_equidistant(f, x0,
     rr[0] = np.vectorize(f)(x)
     for i in range(n - 1):
         rr[i+1, :-1-i] = rr[i, 1:n-i] - rr[i, :-1-i]
-
+    
     pnx, nk = 0, 1
 
     for k in range(n):
