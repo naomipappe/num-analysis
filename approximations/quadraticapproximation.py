@@ -17,11 +17,11 @@ def dot_product(a: float, b: float, f: Callable[[float], float], phi: Callable[[
     :param phi: Callable
     :return: Discrete approximation of dot product of f and phi over [a,b]
     """
-    # h = (b-a) / n
-    # nodes = [a+i*h for i in range(n)]
-    # products = [f(nodes[i]-h/2)*phi(nodes[i]-h/2) for i in range(n)]
-    # return sum(products)*h
-    return integrate.quad(lambda x: f(x)*phi(x),a,b)[0]
+    h = (b-a) / n
+    nodes = [a+i*h for i in range(n)]
+    products = [f(nodes[i]-h/2)*phi(nodes[i]-h/2) for i in range(n)]
+    return sum(products)*h
+    #return integrate.quad(lambda x: f(x)*phi(x),a,b)[0]
 
 
 def square_root_method(matrix, b):
@@ -56,6 +56,10 @@ def square_root_method(matrix, b):
     X2 = np.zeros(n)
     for i in range(n - 1, -1, -1):
         X2[i] = (X1[i] - np.dot(X2, S[i])) / S[i][i]
+
+    e = b - np.dot(matrix, np.reshape(X2, (n, 1)))
+    print("Невязка системы: ", e)
+    print("Норма невязки системы: ", np.linalg.norm(e, np.inf))
     return X2
 
 
@@ -81,10 +85,9 @@ class QuadraticApproximation:
         self.approx_function = f
         self.fsystem = fsystem
 
-    def get_mean_quadratic_approximation(self, n: int = 20, rescale_f=None):
+    def get_mean_quadratic_approximation(self, n: int=5):
         if isinstance(self.fsystem, fs.TrigonometricSystem):
-            n = (n * 2) + 1
-            a0, b0 = -pi, pi
+            a0, b0 = 0, 2*np.pi
             self.approx_function = function_rescale(self.approx_function, *self.borders, a0, b0)
         else:
             a0, b0 = self.borders
@@ -95,11 +98,12 @@ class QuadraticApproximation:
         c = square_root_method(matrix, v)
         return lambda y: np.dot(c, np.array([self.fsystem.get_function(k)(y) for k in range(n)]))
 
-    def plot_approximation(self, n):
-        x = np.linspace(-pi, pi, 100)
+    def plot_approximation(self, n: int=5):
+        x = np.linspace(self.a, self.b, 100)
         mqa = self.get_mean_quadratic_approximation(n)
-        # if isinstance(self.fsystem, fs.TrigonometricSystem):
-        #     mqa = function_rescale(mqa, -pi, pi, *self.borders)
+        if isinstance(self.fsystem, fs.TrigonometricSystem):
+            #mqa = function_rescale(mqa, 0, 2*pi, *self.borders)
+            plt.title("Trigonometric approximation")
         plt.plot(x, mqa(x), 'r--', label='Approximation function')
         plt.plot(x, self.approx_function(x), 'b.', label='True function')
         plt.xlabel('x')
@@ -149,5 +153,4 @@ if __name__ == "__main__":
     a = pi/2
     b = 3*pi/2
     obj = QuadraticApproximation(a, b, f, fs.TrigonometricSystem())
-    #z = obj.get_mean_quadratic_approximation(5)
-    obj.plot_approximation(5)
+    obj.plot_approximation()

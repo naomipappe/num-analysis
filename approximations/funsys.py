@@ -42,8 +42,8 @@ class TrigonometricSystem(FunctionSystem):
 
     def get_function(self, k: int):
         if k != 0:
-            return lambda x: (np.sin if k % 2 != 0 else np.cos)(((k+1) >> 1) * x)
-        return lambda x: 1
+            return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
+        return lambda x: 1/np.sqrt(np.pi*2)
 
 
 if __name__ == "__main__":
