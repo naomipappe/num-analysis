@@ -23,9 +23,12 @@ class ExponentialSystem(FunctionSystem):
         FunctionSystem.__init__(self)
         self.descr = "{exp(kx)} system of functions"
 
+    def __str__(self):
+        return "Exponential system"
+
     def generate_system(self, k: int):
         for i in range(k+1):
-            yield self.get_function(k)
+            yield self.get_function(i)
 
     def get_function(self, k: int):
         return lambda x: np.e**(k*x)
@@ -36,9 +39,12 @@ class TrigonometricSystem(FunctionSystem):
         FunctionSystem.__init__(self)
         self.descr = "{1, cos(kx), sin(kx)} system of functions"
 
+    def __str__(self):
+        return "Trigonometric system"
+
     def generate_system(self, k: int):
         for i in range(k+1):
-            yield self.get_function(k)
+            yield self.get_function(i)
 
     def get_function(self, k: int):
         if k != 0:
