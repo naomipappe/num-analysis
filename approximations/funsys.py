@@ -1,4 +1,6 @@
 import math
+from typing import Callable
+
 import numpy as np
 
 
@@ -31,7 +33,7 @@ class ExponentialSystem(FunctionSystem):
             yield self.get_function(i)
 
     def get_function(self, k: int):
-        return lambda x: np.e**(k*x)
+        return lambda x: np.exp((((k if (k & 1) else -k) + 1) >> 1) * x)
 
 
 class TrigonometricSystem(FunctionSystem):
@@ -48,12 +50,11 @@ class TrigonometricSystem(FunctionSystem):
 
     def get_function(self, k: int):
         if k != 0:
-            return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
-        return lambda x: 1/np.sqrt(np.pi*2)
+        #     return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
+        # return lambda x: 1/np.sqrt(np.pi*2)
+            return lambda x: (np.sin if (k & 1) else np.cos)(((k + 1) >> 1) * x)
+        return lambda x: 1
 
-
-if __name__ == "__main__":
-    test = FunctionSystem()
-    print(test.description)
-    test = TrigonometricSystem()
-    a =test.get_function(5)
+def function_rescale(f: Callable[[float], float], old_a: float, old_b: float,
+                     new_a: float, new_b: float) -> Callable[[float], float]:
+    return lambda x: f((old_b - old_a) / (new_b - new_a) * (x - new_a) + old_a)
