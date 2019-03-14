@@ -12,6 +12,7 @@ def g(x, A = 2, w = 1):
 
 if __name__ == "__main__":
     a = 0
+
     b = 4
     n = int(input("Введите степень полинома: "))
     trigonometric = QuadraticApproximation(a, b, g, fs.TrigonometricSystem())
