@@ -23,7 +23,7 @@ def dot(a: float, b: float, f: Callable[[float], float],
 
 def dot_discrete(f: Callable[[float], float],
                  phi: Callable[[float], float], nodes: list) -> float:
-    return np.dot(list(map(f, nodes)), list(map(phi, nodes))) / (len(nodes) - 1)
+    return np.dot(list(map(f, nodes)), list(map(phi, nodes))) / (len(nodes))
 
 
 def square_root_method(matrix, b, verbose: bool = False):

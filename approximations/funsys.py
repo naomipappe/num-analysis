@@ -50,10 +50,8 @@ class TrigonometricSystem(FunctionSystem):
 
     def get_function(self, k: int):
         if k != 0:
-        #     return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
-        # return lambda x: 1/np.sqrt(np.pi*2)
-            return lambda x: (np.sin if (k & 1) else np.cos)(((k + 1) >> 1) * x)
-        return lambda x: 1
+             return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
+        return lambda x: 1/np.sqrt(np.pi*2)
 
 def function_rescale(f: Callable[[float], float], old_a: float, old_b: float,
                      new_a: float, new_b: float) -> Callable[[float], float]:

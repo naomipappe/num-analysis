@@ -36,7 +36,6 @@ class QuadraticApproximation:
                 self.approx_function, *self.borders, a0, b0)
         else:
             a0, b0 = self.borders
-            n = (n << 1) + 1
         matrix, v = self._make_system_continuous(a0, b0, n)
         c = np.linalg.solve(matrix, v)
         self.mgaC = lambda x: np.dot(c, np.array([self.fsystem.get_function(k)(x) for k in range(n+1)])), n
@@ -54,58 +53,60 @@ class QuadraticApproximation:
             if self.mgaD[1] == n:
                 return self.mgaD[0]
         if nodes is None:
-            if isinstance(self.function_system, fs.TrigonometricSystem):
-                a0, b0 = 0, 2*pi
-                self.approx_function = fs.function_rescale(self.approx_function, *self.borders, a0, b0)
-            else:
-                a0, b0 = self.borders
-                n = (n << 1) + 1
-            nodes = np.linspace(a0, b0, n + 1)
-        # TO:DO refactor function rescaling (move rescaling function to FunctionSystem methods)
+            nodes = np.linspace(self.a, self.b, n + 1)
         # TO:DO refactor this function to make it more readable
-        cost_func_prev = float.fromhex('0x1.fffffffffffffp+1023')  # костыль
-        cost_func_new = float.fromhex('0x1.ffffffffffffep+1023')  # костыль
+        cost_func_prev = float.fromhex('0x1.fffffffffffffp+1023')
+        cost_func_new = float.fromhex('0x1.ffffffffffffep+1023')
 
         m = 0
         while cost_func_new < cost_func_prev:
             m += 1
-
             matrix, v = self._make_system_discrete(m, nodes)
-
             c = np.linalg.solve(matrix, v)
 
-            def result(x):
-                #return np.dot(c, np.array([self.fsystem.get_function(k)(x) for k in range(m + 1)]))
+            def polynom(x):
                 s = 0
+                x_pow = 1
                 for k in range(m + 1):
-                    s += c[k]*self.fsystem.get_function(k)(x)
+                    s += c[k] * x_pow
+                    x_pow *= x
                 return s
+
             def delta(x):
-                return result(x) - self.approx_function(x)
+                return self.approx_function(x) - polynom(x)
 
             cost_func_prev, cost_func_new = cost_func_new, dot_discrete(delta, delta, nodes) * n / (n - m)
+            # true value of m
         m -= 1
+
         matrix, v = self._make_system_discrete(m, nodes)
+
         c = np.linalg.solve(matrix, v)
-        def result(x):
-            s = 0
-            for k in range(m+1):
-                s += c[k]*self.fsystem.get_function(k)(x)
-            return s
-        self.mgaD = result, n
 
-        def delta(x):
-            return self.mgaD[0](x) - self.approx_function(x)
+        def polynom(x):
+                s = 0
+                x_pow = 1
+                for k in range(m + 1):
+                    s += c[k] * x_pow
+                    x_pow *= x
+                return s
 
-        cost_func_new = dot_discrete(delta, delta, nodes) * n / (n - m)
-        print(f"m = {m}, cost = {cost_func_new}")
+        self.mgaD = polynom, n
+
+        def diff(x):
+            return self.approx_function(x) - polynom(x)
+
+        cost_func_new = dot_discrete(diff, diff, nodes) * n / (n - m)
+
+        print(f'm = {m}, cost = {cost_func_new}')
+
         return self.mgaD[0]
 
     def _make_system_discrete(self, m, nodes):
         v = np.array([
-            dot_discrete(self.approx_function, self.fsystem.get_function(i), nodes)
+            dot_discrete(self.approx_function, lambda x: x**i, nodes)
             for i in range(m + 1)])
-        matrix = np.array([[dot_discrete(self.fsystem.get_function(j), self.fsystem.get_function(i), nodes)
+        matrix = np.array([[dot_discrete(lambda x: x**j, lambda x: x**i, nodes)
                             for j in range(m + 1)]
                            for i in range(m + 1)])
         return matrix, v
@@ -117,11 +118,11 @@ class QuadraticApproximation:
             title = f"{str(self.fsystem)} continuous approximation"
             mga = self.get_mean_quadratic_approximation(n)
         elif flag == 'd':
-            title = f"{str(self.fsystem)} discrete approximation"
+            title = f"Polynomial discrete approximation"
             mga = self.get_mean_quadratic_approximation_discrete(n)
         else:
             mga = self.get_mean_quadratic_approximation(n)
-        if isinstance(self.fsystem, fs.TrigonometricSystem):
+        if isinstance(self.fsystem, fs.TrigonometricSystem) and flag == 'c':
             self.approx_function = function_rescale(self.approx_function, 0, 2 * pi, *self.borders)
             mga = function_rescale(mga, 0, 2 * pi, *self.borders)
         plt.title(title)
