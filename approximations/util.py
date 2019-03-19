@@ -1,6 +1,7 @@
 from typing import Callable
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 
 def dot(a: float, b: float, f: Callable[[float], float],
@@ -22,7 +23,9 @@ def dot(a: float, b: float, f: Callable[[float], float],
 
 
 def dot_discrete(f: Callable[[float], float],
-                 phi: Callable[[float], float], nodes: list) -> float:
+                 phi: Callable[[float], float], nodes: list or None = None) -> float:
+    if nodes is None:
+        raise ValueError("No nodes")
     return np.dot(list(map(f, nodes)), list(map(phi, nodes))) / (len(nodes))
 
 
@@ -66,3 +69,15 @@ def square_root_method(matrix, b, verbose: bool = False):
         print("Невязка системы: ", e)
         print("Норма невязки системы: ", np.linalg.norm(e, np.inf))
     return X2
+
+
+def plot_approximation(a, b, title: str, f: Callable[[float], float], phi: Callable[[float], float]):
+    x = np.linspace(a, b, 200)
+    y = [phi(node) for node in x ]
+    plt.title(title)
+    plt.plot(x, y, color="orange", linestyle='-.', label='Approximation function')
+    plt.plot(x, f(x), 'k.', label='True function')
+    plt.xlabel('x')
+    plt.ylabel('y')
+    plt.legend()
+    plt.show()
