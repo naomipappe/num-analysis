@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Callable
-from util import square_root_method
+from util import square_root_method, dot_discrete
 
 class Spline:
     def __init__(self, a: float, b: float, f: Callable[[float], float], rho: float = 1., nodes: list or None = None):
@@ -12,7 +12,7 @@ class Spline:
         self._steps = None
         self._spline = None
 
-    def get_spline(self, n: int = 5):
+    def get_spline(self, n: int = 5, verbose: bool = False):
         if n <= 1:
             return
         if self._nodes is None:
@@ -29,6 +29,9 @@ class Spline:
                            (mu(x0)[i + 1] - m[i + 1] * self._steps[i] ** 2 / 6) * (x0 - self._nodes[i]) / self._steps[i]
 
         self._spline = spline
+        if verbose:
+            print("Discrete delta: ", end='')
+            self._delta_descrete(n)
         return self._spline
 
     def _solve_system(self, n: int):
@@ -60,3 +63,8 @@ class Spline:
         def mu(x):
             return self.approx(x) - T
         return m, mu
+
+    def _delta_discrete(self, n):
+        nodes = np.linspace(self._a, self._b, n + 1)
+        print("||f-Pm||^2 =", dot_discrete(lambda x: self.approx(x) - self._spline(x),
+                                           lambda x: self.approx(x) - self._spline(x), nodes))

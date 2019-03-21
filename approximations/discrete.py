@@ -11,10 +11,12 @@ class DiscreteApproximation:
         self.a = a
         self.b = b
         self.f = f
+        self.polynom = None
+        self._min_nodes = 16
 
-    def get_mean_quadratic_approximation(self, n: int = 15, nodes: list or None = None):
-        if n == 0:
-            n = 15
+    def get_mean_quadratic_approximation(self, n: int = 15, verbose: bool = False):
+        if n == 0 or n < self._min_nodes:
+            n = 20
         nodes = np.linspace(self.a, self.b, n)
         print(len(nodes))
         m = self._opt_power(n, nodes)
@@ -34,11 +36,16 @@ class DiscreteApproximation:
 
         sigma = (dot_discrete(delta, delta, nodes) / (n - m))
         print(f'm* = {m}, sigma* = {sigma}')
-        return polynom
+        self.polynom = polynom
+        if verbose:
+            print("Discrete delta: ", end='')
+            self._delta_descrete(m)
+
+        return self.polynom
 
     def _opt_power(self, n, nodes):
-        costs = [np.inf for _ in range(16)]
-        for m in range(1, 16):
+        costs = [np.inf for _ in range(n)]
+        for m in range(1, n):
             matrix, v = self._make_system(m, nodes)
 
             c = np.linalg.solve(matrix, v)
@@ -67,6 +74,7 @@ class DiscreteApproximation:
                            for i in range(m + 1)])
         return matrix, v
 
-    def _delta_descrete(self, n, mqa):
+    def _delta_descrete(self, n):
         nodes = np.linspace(self.a, self.b, n + 1)
-        print("||f-Pm||^2 =", dot_discrete(lambda x: self.f(x) - mqa(x), lambda x: self.f(x) - mqa(x), nodes))
+        print("||f-Pm||^2 =", dot_discrete(lambda x: self.f(x) - self.polynom(x),
+                                           lambda x: self.f(x) - self.polynom(x), nodes))
