@@ -2,6 +2,7 @@ import numpy as np
 from typing import Callable
 from util import square_root_method, dot_discrete
 
+
 class Spline:
     def __init__(self, a: float, b: float, f: Callable[[float], float], rho: float = 1., nodes: list or None = None):
         self.rho = rho
@@ -31,7 +32,7 @@ class Spline:
         self._spline = spline
         if verbose:
             print("Discrete delta: ", end='')
-            self._delta_descrete(n)
+            self._delta_discrete(n)
         return self._spline
 
     def _solve_system(self, n: int):

@@ -8,16 +8,16 @@ from util import dot_discrete, square_root_method
 
 class DiscreteApproximation:
     def __init__(self, a: float, b: float, f: Callable[[float], float]):
-        self.a = a
-        self.b = b
-        self.f = f
-        self.polynom = None
+        self._a = a
+        self._b = b
+        self._f = f
+        self._polynom = None
         self._min_nodes = 16
 
     def get_mean_quadratic_approximation(self, n: int = 15, verbose: bool = False):
         if n == 0 or n < self._min_nodes:
             n = 20
-        nodes = np.linspace(self.a, self.b, n)
+        nodes = np.linspace(self._a, self._b, n)
         print(len(nodes))
         m = self._opt_power(n, nodes)
         matrix, v = self._make_system(m, nodes)
@@ -32,16 +32,16 @@ class DiscreteApproximation:
             return s
 
         def delta(x):
-            return self.f(x) - polynom(x)
+            return self._f(x) - polynom(x)
 
         sigma = (dot_discrete(delta, delta, nodes) / (n - m))
         print(f'm* = {m}, sigma* = {sigma}')
-        self.polynom = polynom
+        self._polynom = polynom
         if verbose:
             print("Discrete delta: ", end='')
             self._delta_descrete(m)
 
-        return self.polynom
+        return self._polynom
 
     def _opt_power(self, n, nodes):
         costs = [np.inf for _ in range(n)]
@@ -59,7 +59,7 @@ class DiscreteApproximation:
                 return s
 
             def delta(x: float):
-                return self.f(x) - polynom(x)
+                return self._f(x) - polynom(x)
 
             costs[m] = (dot_discrete(delta, delta, nodes) / (n - m))
             print(f"m = {m}, sigma = {costs[m]}")
@@ -67,7 +67,7 @@ class DiscreteApproximation:
 
     def _make_system(self, m, nodes):
         v = np.array([
-            dot_discrete(self.f, lambda x: x ** i, nodes)
+            dot_discrete(self._f, lambda x: x ** i, nodes)
             for i in range(m + 1)])
         matrix = np.array([[dot_discrete(lambda x: x ** j, lambda x: x ** i, nodes)
                             for j in range(m + 1)]
@@ -75,6 +75,6 @@ class DiscreteApproximation:
         return matrix, v
 
     def _delta_descrete(self, n):
-        nodes = np.linspace(self.a, self.b, n + 1)
-        print("||f-Pm||^2 =", dot_discrete(lambda x: self.f(x) - self.polynom(x),
-                                           lambda x: self.f(x) - self.polynom(x), nodes))
+        nodes = np.linspace(self._a, self._b, n + 1)
+        print("||f-Pm||^2 =", dot_discrete(lambda x: self._f(x) - self._polynom(x),
+                                           lambda x: self._f(x) - self._polynom(x), nodes))
