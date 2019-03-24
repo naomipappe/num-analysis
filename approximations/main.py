@@ -17,9 +17,9 @@ def g(x, A = 1, w = 1):
 
 
 if __name__ == "__main__":
-    a = 0
-    b = 4
-    approximated = g
+    a = pi/2
+    b = 3*pi/2
+    approximated = f
     verbose = True
 
     n = int(input("Введите степень полинома: "))
@@ -33,9 +33,9 @@ if __name__ == "__main__":
     title = "Trigonometric continuous approximation"
     util.plot_approximation(a, b, title, f=approximated, phi=Qn_trig)
 
-    # Qn_exp = exponential.get_mean_quadratic_approximation(n, verbose=verbose)
-    # title = "Exponential continuous approximation"
-    # util.plot_approximation(a, b, title, f=approximated, phi=Qn_exp)
+    Qn_exp = exponential.get_mean_quadratic_approximation(n, verbose=verbose)
+    title = "Exponential continuous approximation"
+    util.plot_approximation(a, b, title, f=approximated, phi=Qn_exp)
 
     m = int(input("Введите кол-во узлов: "))
     Pm = discrete.get_mean_quadratic_approximation(m, verbose=verbose)
@@ -47,8 +47,8 @@ if __name__ == "__main__":
     title = "Spline interpolation"
     util.plot_approximation(a, b, title, f=approximated, phi=s)
 
-    legandre = LegendreApproximation(a, b, approximated)
-    Qn_legandre = legandre.get_legendre_approximation(n, True)
-    title = "Legandre continuous approximation"
-    util.plot_approximation(a, b, title, f=approximated, phi=Qn_legandre)
+    # legandre = LegendreApproximation(a, b, approximated)
+    # Qn_legandre = legandre.get_legendre_approximation(n, True)
+    # title = "Legandre continuous approximation"
+    # util.plot_approximation(a, b, title, f=approximated, phi=Qn_legandre)
     quit()

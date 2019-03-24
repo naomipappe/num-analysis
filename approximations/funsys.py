@@ -45,10 +45,10 @@ class ExponentialSystem(FunctionSystem):
 class TrigonometricSystem(FunctionSystem):
     def __init__(self):
         FunctionSystem.__init__(self)
-        self._descr = "{1, cos(kx), sin(kx)} system of functions"
+        self._descr = "Trigonometric system"
 
     def __str__(self):
-        return "Trigonometric system"
+        return self.description
 
     def generate_system(self, k: int):
         for i in range(k+1):
