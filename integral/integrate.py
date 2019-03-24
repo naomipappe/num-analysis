@@ -20,6 +20,8 @@ class Integral:
         pass
 
 
+# TODO change method of calculation integral value, due to bad performance on 1e-3 accuracy already
+
 class MeanRectangleIntegral(Integral):
     def __init__(self, a: float, b: float, f: Callable[[float], float], d2f: Callable[[float], float]):
         Integral.__init__(self)
@@ -32,6 +34,8 @@ class MeanRectangleIntegral(Integral):
 
     def integrate(self, eps: float or None = None, verbose: bool = False):
         if eps is not None:
+            if self.borders[1] == np.inf:
+                self.borders = self.borders[0], 2 / eps
             integral = self._runge_method(eps)
             if verbose:
                 print("Априорная оценка погрешности: ", abs(self._apriori_error_measure()))
@@ -168,13 +172,13 @@ class SimpsonIntegral(Integral):
 
 
 if __name__ == "__main__":
-    def f(x, A: float = 1., w: float = 1.):
-        return A * x * np.sin(w * x ** 2)
+    def f(x):
+        return (x ** 2 + 1) / (x ** 4 + 1)
 
 
-    def d2f(x, A: float = 1., w: float = 1.):
-        return 2 * A * w * x * (3 * np.cos(w * (x ** 2)) - 2 * w * x ** 2 * np.sin(w * (x ** 2)))
+    def d2f(x):
+        return -2 * x * (x ** 4 + 2 * (x ** 2) - 1) / (x ** 4 + 1)
 
 
-    I = MeanRectangleIntegral(0, 2, f, d2f)
-    print(I.integrate(eps=1e-4, verbose=True))
+    I = MeanRectangleIntegral(0, np.inf, f, d2f)
+    print(I.integrate(eps=1e-3, verbose=True))
