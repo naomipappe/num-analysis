@@ -1,83 +1,125 @@
+import time
 from typing import Callable
 
 import numpy as np
+
+
+# TODO upper border getter for infinity limit
+
+def upper_border_approximation_ihor(eps: float) -> float:
+    return np.ceil(2 / eps)
+
+
+def upper_border_approximation_sasha(eps: float) -> float:
+    arg = (np.pi * np.sqrt(2) - 2 * eps) / (2 * np.sqrt(2))
+    return np.ceil((np.tan(arg) - 1) / np.sqrt(2))
+
+
+def upper_border_approximation_denys(eps: float) -> float:
+    return np.ceil(np.tan((np.pi - eps) / 2))
 
 
 class Integral:
     def __init__(self):
         self._description = "Base integral class"
 
-    def integrate(self, n: int):
+    @classmethod
+    def _algebraic_precision(cls):
+        return 0
+
+    def integrate(self, eps: float, verbose: bool, runge: bool):
         pass
 
     def _apriori_error_measure(self):
         pass
 
     def _aposteriori_error_measure(self, integral_prev: float, integral_next: float):
-        pass
+        return abs(integral_prev - integral_next) / (2 ** self._algebraic_precision() - 1)
 
     def _runge_method(self, eps: float):
         pass
 
+    def _integrate(self, integrand: Callable[[float], float]):
+        pass
 
-# TODO change method of calculation integral value, due to bad performance on 1e-3 accuracy already
+    def _richardson_clarification(self, integral_prev, integral_next):
+        return 2 ** self._algebraic_precision() / (2 ** self._algebraic_precision() - 1) * integral_next - 1 / (
+                2 ** self._algebraic_precision() - 1) * integral_prev
+
 
 class MeanRectangleIntegral(Integral):
-    def __init__(self, a: float, b: float, f: Callable[[float], float], d2f: Callable[[float], float]):
+    _algebraic_precision_value = 2
+
+    def __init__(self, a: float, b: float, integrand: Callable[[float], float],
+                 integrand_2_derivative: Callable[[float], float]):
         Integral.__init__(self)
-        self._description = "Integral of function, calculated by mean rectangle formula"
+        self._description = 'Интеграл функции, вычисленный с помощью составной формулы средних прямоугольников'
         self.borders = a, b
-        self.integrand = f
-        self.integrand_second_derivative = d2f
-        self._nodes = None
+        self.integrand = integrand
+        self.integrand_second_derivative = integrand_2_derivative
         self._step = None
 
-    def integrate(self, eps: float or None = None, verbose: bool = False):
-        if eps is not None:
+    @classmethod
+    def _algebraic_precision(cls):
+        return cls._algebraic_precision_value
+
+    def integrate(self, eps: float, verbose: bool = False, runge: bool = False):
+        if runge:
             if self.borders[1] == np.inf:
-                self.borders = self.borders[0], 2 / eps
-            integral = self._runge_method(eps)
+                self.borders = self.borders[0], upper_border_approximation_ihor(eps)
+            integral, h, aposteriori_error = self._runge_method(eps)
             if verbose:
                 print("Априорная оценка погрешности: ", abs(self._apriori_error_measure()))
                 print(f"Интеграл от функции по отрезку [{self._a},{self._b}]")
-                print(f"I = {integral[0]}, h = {integral[1]}")
-                print(f"Апостериорная оценка погрешности : ", integral[2])
-            return integral[0]
+                print(f"I = {integral}, h = {h}")
+                print(f"Апостериорная оценка погрешности : ", aposteriori_error)
+            return integral
         else:
-            self._recalculate_nodes(200)
-            integral = self._integrate()
+            if self.borders[1] == np.inf:
+                self._b = upper_border_approximation_ihor(eps)
+            self._step = (self._b - self._a)
+            while self._apriori_error_measure() > eps / 2:
+                self._step /= 2
+            integral, h = self._integrate(self.integrand)
             if verbose:
                 print("Априорная оценка погрешности: ", abs(self._apriori_error_measure()))
                 print(f"Интеграл от функции по отрезку [{self._a},{self._b}]")
-                print(f"I = {integral[0]}, h = {integral[1]}")
-            return integral[0]
+                print(f"I = {integral}, h = {h}")
+            return integral
 
     def _apriori_error_measure(self):
-        error = self._step ** 2 / 24 * self._step * sum(map(d2f, self._nodes))
-        return error
+        d2f_measure = 0
+        n = (self.borders[1] - self.borders[0]) / self._step
+        for i in range(int(n + 1)):
+            x_i = self.borders[0] + i * self._step
+            d2f_measure += d2f(x_i - self._step / 2)
 
-    def _recalculate_nodes(self, n: int):
-        self._nodes, self._step = np.linspace(*self.borders, n, retstep=True)
-        self._nodes = [x - self._step / 2 for x in self._nodes]
+        error = (self._step ** 2) / 24 * self._step * d2f_measure
+        return abs(error)
 
-    def _integrate(self):
-        return self._step * sum(map(self.integrand, self._nodes)), self._step
+    def _integrate(self, integrand: Callable[[float], float]):
+        integral = 0
+        n = (self.borders[1] - self.borders[0]) / self._step
+        for i in range(int(n + 1)):
+            x_i = self.borders[0] + i * self._step
+            integral += integrand(x_i - self._step / 2)
+        return integral * self._step, self._step
 
     def _runge_method(self, eps: float):
-        n = 2
-        self._recalculate_nodes(n)
-        integral_prev = self._integrate()
-        self._recalculate_nodes(2 * n)
-        integral_next = self._integrate()
-        while self._aposteriori_error_measure(integral_prev[0], integral_next[0]) >= eps:
-            n = 2 * n
+        self._step = (self.borders[1] - self.borders[0])
+        integral_prev = self._integrate(self.integrand)
+        self._step = self._step / 2
+        integral_next = self._integrate(self.integrand)
+        while self._aposteriori_error_measure(integral_prev[0], integral_next[0]) > eps / 2:
+            self._step = self._step / 2
             integral_prev = integral_next
-            self._recalculate_nodes(2 * n)
-            integral_next = self._integrate()
+            integral_next = self._integrate(self.integrand)
+        integral_next = super()._richardson_clarification(integral_next=integral_next[0],
+                                                          integral_prev=integral_prev[0]), integral_next[1]
         return integral_next[0], integral_next[1], self._aposteriori_error_measure(integral_prev[0], integral_next[0])
 
     def _aposteriori_error_measure(self, integral_prev: float, integral_next: float):
-        return abs(integral_next - integral_prev)
+        return super()._aposteriori_error_measure(integral_prev, integral_next)
 
     @property
     def description(self):
@@ -112,29 +154,74 @@ class MeanRectangleIntegral(Integral):
 
 
 class SimpsonIntegral(Integral):
-    def __init__(self, a: float, b: float, f: Callable[[float], float], d2f: Callable[[float], float]):
+    _algebraic_precision_value = 4
+
+    def __init__(self, a: float, b: float, integrand: Callable[[float], float], d4f: Callable[[float], float]):
         Integral.__init__(self)
-        self._description = "Integral of function calculated using Simpson's rule"
+        self._description = 'Интеграл функции, вычисленный с помощью составной формулы Симпсона'
         self.borders = a, b
-        self.integrand = f
-        self.d2f = d2f
-        self._nodes = None
+        self.integrand = integrand
+        self.integrand_4_derivative = d4f
         self._step = None
 
-    def integrate(self, n: int):
-        pass
+    @classmethod
+    def _algebraic_precision(cls):
+        return cls._algebraic_precision_value
+
+    def integrate(self, eps: float, verbose: bool or None = None, runge: bool = False):
+        if runge:
+            if self.borders[1] == np.inf:
+                self.borders = self.borders[0], upper_border_approximation_ihor(eps)
+            integral, h, aposteriori_error = self._runge_method(eps)
+            if verbose:
+                print("Априорная оценка погрешности: ", abs(self._apriori_error_measure()))
+                print(f"Интеграл от функции по отрезку [{self._a},{self._b}]")
+                print(f"I = {integral}, h = {h}")
+                print(f"Апостериорная оценка погрешности : ", aposteriori_error)
+            return integral
+        else:
+            if self.borders[1] == np.inf:
+                self._b = upper_border_approximation_ihor(eps)
+            self._step = (self._b - self._a) / 10
+            while self._apriori_error_measure() > eps:
+                self._step /= 2
+            integral, h = self._integrate(self.integrand)
+            if verbose:
+                print("Априорная оценка погрешности: ", abs(self._apriori_error_measure()))
+                print(f"Интеграл от функции по отрезку [{self._a},{self._b}]")
+                print(f"I = {integral}, h = {h}")
+            return integral
 
     def _aposteriori_error_measure(self, integral_prev: float, integral_next: float):
-        pass
+        return super()._aposteriori_error_measure(integral_prev, integral_next)
 
     def _apriori_error_measure(self):
-        pass
+        return abs((self._step ** 4 / 2880) * self._integrate(self.integrand_4_derivative)[0])
 
     def _runge_method(self, eps: float):
-        pass
+        self._step = (self.borders[1] - self.borders[0])
+        integral_prev = self._integrate(self.integrand)
+        self._step = self._step / 2
+        integral_next = self._integrate(self.integrand)
+        while self._aposteriori_error_measure(integral_prev[0], integral_next[0]) > eps / 2:
+            self._step = self._step / 2
+            integral_prev = integral_next
+            integral_next = self._integrate(self.integrand)
+        integral_next = super()._richardson_clarification(integral_next=integral_next[0],
+                                                          integral_prev=integral_prev[0]), integral_next[1]
+        return integral_next[0], integral_next[1], self._aposteriori_error_measure(integral_prev[0], integral_next[0])
 
-    def _integrate(self):
-        pass
+    def _integrate(self, integrand: Callable[[float], float]):
+        integral = 0
+        n = int((self.borders[1] - self.borders[0]) / self._step)
+
+        def node(k: int) -> float:
+            return self.borders[0] + k * self._step
+
+        for i in range(1, n, 2):
+            integral += self.integrand(node(i - 1)) + 4 * self.integrand(node(i)) + self.integrand(node(i + 1))
+
+        return self._step / 3 * integral, self._step
 
     def __str__(self):
         return self.description
@@ -159,16 +246,16 @@ class SimpsonIntegral(Integral):
         return self._integrand
 
     @integrand.setter
-    def integrand(self, f_new: Callable[[float], float]):
-        self._integrand = f_new
+    def integrand(self, new_integrand: Callable[[float], float]):
+        self._integrand = new_integrand
 
     @property
-    def d2f(self):
-        return self._d2f
+    def integrand_4_derivative(self):
+        return self._d4f
 
-    @d2f.setter
-    def d2f(self, d2f_new: Callable[[float], float]):
-        self._d2f = d2f_new
+    @integrand_4_derivative.setter
+    def integrand_4_derivative(self, d4f_new: Callable[[float], float]):
+        self._d4f = d4f_new
 
 
 if __name__ == "__main__":
@@ -176,9 +263,26 @@ if __name__ == "__main__":
         return (x ** 2 + 1) / (x ** 4 + 1)
 
 
+    def g(x):
+        return 1 / (x ** 2 + 4 * x + 13)
+
+
     def d2f(x):
-        return -2 * x * (x ** 4 + 2 * (x ** 2) - 1) / (x ** 4 + 1)
+        return -2 * x * (x ** 4 + 2 * (x ** 2) - 1) / ((x ** 4 + 1) ** 2)
 
 
-    I = MeanRectangleIntegral(0, np.inf, f, d2f)
-    print(I.integrate(eps=1e-3, verbose=True))
+    def d2g(x):
+        return -2 * (x + 2) / (g(x) ** 2)
+
+
+    def d4g(x):
+        return 24 * (2 * x + 4) ** 4 / (x ** 2 + 4 * x + 13) ** 5 - 72 * (2 * x + 4) ** 2 / (
+                x ** 2 + 4 * x + 13) ** 4 + 24 / (x ** 2 + 4 * x + 13) ** 3
+
+
+    start = time.time()
+    I = SimpsonIntegral(1, np.inf, g, d4g)
+    print(I)
+    I.integrate(eps=1e-5, verbose=True, runge=True)
+    end = time.time()
+    print("time:", end - start)

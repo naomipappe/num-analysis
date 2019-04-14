@@ -1,7 +1,9 @@
 from typing import Callable
-from funsys import function_rescale, LegendreSystem
+
 import numpy as np
-from util import dot, dot_discrete
+
+from funsys import function_rescale, LegendreSystem
+from util import dot, plot_approximation
 
 
 class LegendreApproximation:
@@ -16,32 +18,33 @@ class LegendreApproximation:
         approx_borders = self.fs.get_orthogonality_borders()
         self._approx = function_rescale(self._approx, *self.borders, *approx_borders)
         c = np.array([dot(*approx_borders, self._approx,
-                          self.fs.get_function(i))*((2 * i + 1) / 2) for i in range(n+1)])
-        self._legendre = lambda x: np.dot(c, np.array([self.fs.get_function(i)(x) for i in range(n + 1)]))
+                          self.fs.get_function(i)) * (2 * i + 1) / 2 for i in range(n+1)])
+        self._legendre = lambda x: np.dot(c, np.array([self.fs.get_function(i)(x) for i in range(n+1)]))
 
         if verbose:
             print("Continuous delta(integral): ", end='')
-            self._delta()
-            print("Discrete delta: ", end='')
-            self._delta_discrete(n)
+            self._delta(approx_borders)
+            print("Continuous delta(||f||^2 - sum(c_i^2/||phi_i||^2)): ", end='')
+            self._delta_discrete(c, approx_borders)
+            plot_approximation(*approx_borders, "Legendre approximation on [-1,1]", self._approx, self._legendre)
 
         self._approx = function_rescale(self._approx, *approx_borders, *self.borders)
         self._legendre = function_rescale(self._legendre, *approx_borders, *self.borders)
 
         if verbose:
             print("Continuous delta(integral): ", end="")
-            self._delta()
+            self._delta(self.borders)
 
         return self._legendre
 
-    def _delta(self):
-        print("||f-Qn||^2 =", dot(self._a, self._b, lambda x: self._approx(x) - self._legendre(x),
+    def _delta(self, borders):
+        print("||f-Qn||^2 =", dot(*borders, lambda x: self._approx(x) - self._legendre(x),
                                   lambda x: self._approx(x) - self._legendre(x)))
 
-    def _delta_discrete(self, n):
-        nodes = np.linspace(*self.borders, n)
-        print("||f-Qn||^2 =", dot_discrete(lambda x: self._approx(x)-self._legendre(x),
-                                           lambda x: self._approx(x)-self._legendre(x), nodes))
+    def _delta_discrete(self, c, borders):
+        yield_sys = [(2 * i + 1) * (c[i] ** 2) / 2 for i in
+                     range(len(c))]
+        print("||f-Qn||^2 =", abs(dot(*borders, self._approx, self._approx) - sum(yield_sys)))
 
     @property
     def description(self):

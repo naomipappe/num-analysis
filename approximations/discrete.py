@@ -3,25 +3,22 @@ from typing import Callable
 
 from util import dot_discrete, square_root_method
 
-# TO:DO optimal power of approximation determination algorithm
-
-
 class DiscreteApproximation:
     def __init__(self, a: float, b: float, f: Callable[[float], float]):
         self._a = a
         self._b = b
         self._f = f
         self._polynom = None
-        self._min_nodes = 16
+        self._min_nodes = 20
 
-    def get_mean_quadratic_approximation(self, n: int = 15, verbose: bool = False):
+    def get_mean_quadratic_approximation(self, n: int = 20, verbose: bool = False):
         if n == 0 or n < self._min_nodes:
-            n = 20
+            n = self._min_nodes
         nodes = np.linspace(self._a, self._b, n)
         print(len(nodes))
         m = self._opt_power(n, nodes)
         matrix, v = self._make_system(m, nodes)
-        c = np.linalg.solve(matrix, v)
+        c = square_root_method(matrix, v)
 
         def polynom(x):
             s = 0
@@ -48,7 +45,7 @@ class DiscreteApproximation:
         for m in range(1, n):
             matrix, v = self._make_system(m, nodes)
 
-            c = np.linalg.solve(matrix, v)
+            c = square_root_method(matrix, v)
 
             def polynom(x: float):
                 s = 0
@@ -63,7 +60,8 @@ class DiscreteApproximation:
 
             costs[m] = (dot_discrete(delta, delta, nodes) / (n - m))
             print(f"m = {m}, sigma = {costs[m]}")
-        return costs.index(min(costs))
+        opt_power = int(input("Analyze costs and input optimal power: "))
+        return opt_power
 
     def _make_system(self, m, nodes):
         v = np.array([

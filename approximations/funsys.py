@@ -1,7 +1,7 @@
-
 from typing import Callable
 
 import numpy as np
+
 
 
 class FunctionSystem:
@@ -32,7 +32,7 @@ class ExponentialSystem(FunctionSystem):
         return "Exponential system"
 
     def generate_system(self, k: int):
-        for i in range(k+1):
+        for i in range(k + 1):
             yield self.get_function(i)
 
     def get_function(self, k: int):
@@ -51,14 +51,14 @@ class TrigonometricSystem(FunctionSystem):
         return self.description
 
     def generate_system(self, k: int):
-        for i in range(k+1):
+        for i in range(k + 1):
             yield self.get_function(i)
 
     def get_function(self, k: int):
-        return lambda x: (np.sin if (k & 1) else np.cos)(((k + 1) >> 1) * x)
-        # if k != 0:
-        #     return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x)/np.sqrt(np.pi)
-        # return lambda x: 1/np.sqrt(np.pi*2)
+        # return lambda x: (np.sin if (k & 1) else np.cos)(((k + 1) >> 1) * x)
+        if k != 0:
+            return lambda x: (np.sin if k % 2 == 0 else np.cos)(k * x) / np.sqrt(np.pi)
+        return lambda x: 1 / np.sqrt(np.pi * 2)
 
     def get_orthogonality_borders(self):
         return -np.pi, np.pi
@@ -74,25 +74,35 @@ class LegendreSystem(FunctionSystem):
         self._values[1] = lambda x: x
 
     def generate_system(self, k: int):
-        for i in range(k+1):
+        for i in range(k + 1):
             yield self.get_function(i)
 
     def get_function(self, k: int):
-        # if k in self._values.keys():
-        #     return self._values[k]
-        # else:
-        #     self._values[k] = lambda x: (2 * k - 1) / k * x * self.get_function(k - 1)(x) - \
-        #                  (k - 1) / k * self.get_function(k - 2)(x)
-        #     return self._values[k]
-        if k == 0:
-            return lambda x: 1
-        if k == 1:
-            return lambda x: x
-        return lambda x: (2 * k - 1) / k * x * self.get_function(k - 1)(x) - (k - 1) / k * self.get_function(k - 2)(x)
+        if k in self._values.keys():
+            return self._values[k]
+        else:
+            self._values[k] = lambda x: (2 * k - 1) / k * x * self.get_function(k - 1)(x) - \
+                         (k - 1) / k * self.get_function(k - 2)(x)
+            return self._values[k]
 
     def get_orthogonality_borders(self):
         return -1, 1
 
+
+class PolynomialSystem(FunctionSystem):
+    def __init__(self):
+        FunctionSystem.__init__(self)
+        self._descr = "Polynomial system of functions"
+
+    def generate_system(self, k: int):
+        for i in range(k+1):
+            yield self.get_function(i)
+
+    def get_function(self, k: int):
+        return lambda x: x**k
+
+    def get_orthogonality_borders(self):
+        return None
 
 def function_rescale(f: Callable[[float], float], old_a: float, old_b: float,
                      new_a: float, new_b: float) -> Callable[[float], float]:
