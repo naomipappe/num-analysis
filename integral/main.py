@@ -1,11 +1,18 @@
-from numpy import sin
+from numpy import inf
 
 import integrate
 
 
-def f(x: float, A: float = 1., w: float = 1.):
-    return A * x * sin(w * (x ** 2))
+def f(x):
+    return (x ** 2 + 1) / (x ** 4 + 1)
+
+
+def d2f(x):
+    return -2 * x * (x ** 4 + 2 * (x ** 2) - 1) / ((x ** 4 + 1) ** 2)
+
 
 
 if __name__ == '__main__':
-    print(integrate.upper_border_approximation_ihor(1e-5))
+    integral = integrate.MeanRectangleIntegral(0, inf, f, d2f)
+    value = integral.integrate(1e-3, runge=False, adaptive=True)
+    print(value)
