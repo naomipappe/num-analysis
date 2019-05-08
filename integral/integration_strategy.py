@@ -73,7 +73,7 @@ class RungeStrategy(IntegrationStrategy):
         return integral_next, step, _aposteriori_error_estimation(integral_prev, integral_next, algebraic_precision)
 
     @classmethod
-    def _richardson_clarification(cls, integral_prev: float, integral_next: float, algebraic_precision: int):
+    def _richardson_clarification(cls, integral_prev: float, integral_next: float, algebraic_precision: int) -> float:
         return 2 ** algebraic_precision / (2 ** algebraic_precision - 1) \
                * integral_next - 1 / (2 ** algebraic_precision - 1) * integral_prev
 

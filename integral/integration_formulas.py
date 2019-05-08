@@ -12,16 +12,21 @@ class QuadraticFormula:
 
     @classmethod
     def value_simple(cls, integration_borders: tuple, integrand: Callable[[float], float]) -> float:
-        pass
+        raise NotImplementedError('Called to abstract method')
 
     @classmethod
     def value_composite(cls, integration_borders: tuple, integrand: Callable[[float], float],
                         integration_step: float) -> float:
-        pass
+        raise NotImplementedError('Called to abstract method')
+
+    @classmethod
+    def borders_check(cls, left_border, right_border):
+        if left_border > right_border:
+            raise ValueError('Left integration border should be smaller than right integration border')
 
     @classmethod
     def quadratic_formula_step_error(cls, integration_borders: tuple, dnf_measure: float, tolerance: float) -> tuple:
-        pass
+        raise NotImplementedError('Called to abstract method')
 
     @classmethod
     def algebraic_precision(cls):
@@ -39,6 +44,7 @@ class MeanRectangleFormula(QuadraticFormula):
     @classmethod
     def value_simple(cls, integration_borders: tuple, integrand: Callable[[float], float]) -> float:
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
         return (right_border - left_border) * integrand((left_border + right_border) / 2)
 
     @classmethod
@@ -46,6 +52,7 @@ class MeanRectangleFormula(QuadraticFormula):
                         integration_step: float) -> float:
         integral = 0
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
         nodes_amount = int(ceil((right_border - left_border) / integration_step))
 
         def node(k: int):
@@ -70,6 +77,8 @@ class SimpsonsRule(QuadraticFormula):
     @classmethod
     def value_simple(cls, integration_borders: tuple, integrand: Callable[[float], float]) -> float:
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
+
         return (right_border - left_border) / 6 * (
                 integrand(left_border) + 4 * integrand((left_border + right_border) / 2) + integrand(right_border))
 
@@ -78,6 +87,7 @@ class SimpsonsRule(QuadraticFormula):
                         integration_step: float) -> float:
         integral = 0
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
         nodes_amount = int(ceil((right_border - left_border) / integration_step))
 
         def node(k: int) -> float:
@@ -101,8 +111,9 @@ class TrapezoidalFormula(QuadraticFormula):
     _description = 'Trapezoidal quadratic formula'
 
     @classmethod
-    def value_simple(cls, integration_borders: tuple, integrand: Callable[[float], float]) -> Callable[[float], float]:
+    def value_simple(cls, integration_borders: tuple, integrand: Callable[[float], float]) -> float:
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
         return (right_border - left_border) * (integrand(left_border) + integrand(right_border)) / 2
 
     @classmethod
@@ -110,6 +121,7 @@ class TrapezoidalFormula(QuadraticFormula):
                         integration_step: float) -> float:
         integral = 0
         left_border, right_border = integration_borders
+        super().borders_check(left_border, right_border)
         n = int(ceil((right_border - left_border) / integration_step))
 
         def node(k: int):
