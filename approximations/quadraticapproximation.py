@@ -64,7 +64,7 @@ class QuadraticApproximation:
                                   lambda x: self._approx(x) - self._mqa(x)))
 
     def _delta_discrete(self, c, borders):
-        yield_sys = [(c[i] ** 2) / dot(*borders, self._fs.get_function(i), self._fs.get_function(i)) for i in
+        yield_sys = [(c[i] ** 2) * dot(*borders, self._fs.get_function(i), self._fs.get_function(i)) for i in
                      range(len(c))]
         print("||f-Qn||^2 =", abs(dot(*borders, self._approx, self._approx) - sum(yield_sys)))
 

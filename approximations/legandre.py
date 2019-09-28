@@ -24,7 +24,7 @@ class LegendreApproximation:
         if verbose:
             print("Continuous delta(integral): ", end='')
             self._delta(approx_borders)
-            print("Continuous delta(||f||^2 - sum(c_i^2/||phi_i||^2)): ", end='')
+            print("Continuous delta(||f||^2 - sum(c_i^2*||phi_i||^2)): ", end='')
             self._delta_discrete(c, approx_borders)
             plot_approximation(*approx_borders, "Legendre approximation on [-1,1]", self._approx, self._legendre)
 
@@ -42,7 +42,7 @@ class LegendreApproximation:
                                   lambda x: self._approx(x) - self._legendre(x)))
 
     def _delta_discrete(self, c, borders):
-        yield_sys = [(2 * i + 1) * (c[i] ** 2) / 2 for i in
+        yield_sys = [(c[i] ** 2) * 2/(2*i+1) for i in
                      range(len(c))]
         print("||f-Qn||^2 =", abs(dot(*borders, self._approx, self._approx) - sum(yield_sys)))
 

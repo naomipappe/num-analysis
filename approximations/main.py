@@ -30,29 +30,29 @@ if __name__ == "__main__":
 
     # trigonometric = QuadraticApproximation(a, b, approximated, fs.TrigonometricSystem())
     exponential = QuadraticApproximation(a, b, approximated, fs.ExponentialSystem())
-    # polynomial = QuadraticApproximation(a, b, f, fs.PolynomialSystem())
+    # polynomial = QuadraticApproximation(a, b, approximated, fs.PolynomialSystem())
     legandre = LegendreApproximation(a, b, approximated)
     discrete = DiscreteApproximation(a, b, approximated)
-    spline = Spline(a, b, approximated, rho=10 ** 5)
+    spline = Spline(a, b, approximated, rho=100)
 
     # Qn_trig = trigonometric.get_mean_quadratic_approximation(n, verbose=verbose)
     # title = "Trigonometric continuous approximation"
     # util.plot_approximation(a, b, title, f=approximated, phi=Qn_trig)
     #
     # print()
-
+    #
     Qn_exp = exponential.get_mean_quadratic_approximation(n, verbose=verbose)
     title = "Exponential continuous approximation"
     util.plot_approximation(a, b, title, f=approximated, phi=Qn_exp)
 
     print()
-
+    #
     # Qn_polynomial = polynomial.get_mean_quadratic_approximation(n, verbose=verbose)
     # title = "Polynomial continuous approximation"
     # util.plot_approximation(a, b, title, f=approximated, phi=Qn_polynomial)
-    #
-    # print()
 
+    # print()
+    #
     n = int(input("Введите кол-во узлов для нахождения ЭНСКП по системе многочленов Лежандра: "))
     Qn_legandre = legandre.get_legendre_approximation(n, True)
     title = "Legandre continuous approximation"
@@ -64,9 +64,9 @@ if __name__ == "__main__":
     Pm = discrete.get_mean_quadratic_approximation(m, verbose=verbose)
     title = "Polynomial discrete approximation"
     util.plot_approximation(a, b, title, approximated, Pm)
-    
+
     print()
-    
+
     m = int(input("Введите кол-во узлов: "))
     s = spline.get_spline(m, verbose=True)
     title = "Spline interpolation"

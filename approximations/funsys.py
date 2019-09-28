@@ -1,8 +1,7 @@
 from typing import Callable
 
 import numpy as np
-
-
+from scipy.special import eval_legendre
 
 class FunctionSystem:
     def __init__(self):
@@ -72,18 +71,26 @@ class LegendreSystem(FunctionSystem):
         self._values = dict()
         self._values[0] = lambda x: 1
         self._values[1] = lambda x: x
+        self._values[2] = lambda x: 1 / 2 * (3 * x ** 2 - 1)
+        self._values[3] = lambda x: 1 / 2 * (5 * x ** 3 - 3 * x)
+        self._values[4] = lambda x: 1 / 8 * (35 * x ** 4 - 30 * x ** 2 + 3)
+        self._values[5] = lambda x: 1 / 8 * (63 * x ** 5 - 70 * x ** 3 + 15 * x)
+        self._values[6] = lambda x: 1 / 16 * (231 * x ** 6 - 315 * x ** 4 + 105 * x**2-5)
 
     def generate_system(self, k: int):
         for i in range(k + 1):
             yield self.get_function(i)
 
     def get_function(self, k: int):
-        if k in self._values.keys():
-            return self._values[k]
-        else:
-            self._values[k] = lambda x: (2 * k - 1) / k * x * self.get_function(k - 1)(x) - \
-                         (k - 1) / k * self.get_function(k - 2)(x)
-            return self._values[k]
+        # if k in self._values.keys():
+        #     return self._values[k]
+        # else:
+        #     self._values[k] = lambda x: (2 * k - 1) / k * x * self.get_function(k - 1)(x) - \
+        #                  (k - 1) / k * self.get_function(k - 2)(x)
+        #     return self._values[k]
+        #return lambda x: eval_legendre(k,x)
+        return self._values[k]
+
 
     def get_orthogonality_borders(self):
         return -1, 1
@@ -95,14 +102,15 @@ class PolynomialSystem(FunctionSystem):
         self._descr = "Polynomial system of functions"
 
     def generate_system(self, k: int):
-        for i in range(k+1):
+        for i in range(k + 1):
             yield self.get_function(i)
 
     def get_function(self, k: int):
-        return lambda x: x**k
+        return lambda x: x ** k
 
     def get_orthogonality_borders(self):
         return None
+
 
 def function_rescale(f: Callable[[float], float], old_a: float, old_b: float,
                      new_a: float, new_b: float) -> Callable[[float], float]:

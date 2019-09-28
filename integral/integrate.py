@@ -17,7 +17,7 @@ class Integral:
         print()
         print(formula.description())
         print(strategy.description())
-        print(f"Integral of functions over interval [{self.borders[0]},{self.borders[1]}]")
+        print(f"Integral of function over interval [{self.borders[0]},{self.borders[1]}]")
         print(f'I = {integral}')
         if isinstance(step, list):
             steps_info = ' '.join(map(str, step))
