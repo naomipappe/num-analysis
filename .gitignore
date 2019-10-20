@@ -14,5 +14,8 @@ linear-equations-systems/__pycache__/
 linear-equations-systems/data\.txt
 
 interpolation/__pycache__/
+integration/__pycache__/
+approximations/__pycache__/
+
 
 *.txt
