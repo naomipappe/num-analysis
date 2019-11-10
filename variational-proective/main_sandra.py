@@ -8,7 +8,7 @@ from sympy.parsing.sympy_parser import (
 
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
-
+from sympy import lambdify
 
 variable = symbols("x")
 
@@ -34,12 +34,14 @@ constants = {
 }
 
 solution_exact_expression = parse_expr(
-    f'{constants["m1"]}*sin({constants["m2"]}*x)+{constants["m3"]}'
+    f'{constants["m1"]}*sin({constants["m2"]}*x)+{constants["m3"]}', evaluate=False
 )
 solution_exact_expression_dx = solution_exact_expression.diff(variable)
 solution_exact_expression_d2x = solution_exact_expression.diff(variable, 2)
 
-k_expression = parse_expr(f'{constants["k1"]}*(x**{constants["k2"]})+{constants["k3"]}')
+k_expression = parse_expr(
+    f'{constants["k1"]}*(x**{constants["k2"]})+{constants["k3"]}', evaluate=False
+)
 k_dx = k_expression.diff(variable)
 
 
@@ -157,16 +159,17 @@ def main():
     }
     n = 10
     tst = BasisFunction(context)
-    def L_basis_zero(x:float)->float:
-        return  (-1) * (
-            dk().lambdify(variable, "numpy")(x)
+
+    def L_basis_zero(x: float) -> float:
+        return (-1) * (
+            lambdify(variable, dk(), "numpy")(x)
             * tst.get_first_derivative_function(0)(x)
-            + k().lambdify(variable, "numpy")(x)
+            + lambdify(variable, k(), "numpy")(x)
             * tst.get_second_derivative_function(0)(x)
         )
-        + p(x) * tst.get_first_derivative_function(0)(x)
-        + q(x) * tst.get_function(0)(x)
-    print(k_dx)
+        +p(x) * tst.get_first_derivative_function(0)(x)
+        +q(x) * tst.get_function(0)(x)
+
 
 
 if __name__ == "__main__":
