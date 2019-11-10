@@ -1,8 +1,7 @@
 class VariationalProective:
-    
     def __init__(self):
         super().__init__()
-    
+
     @classmethod
     def solve(cls):
         raise NotImplementedError
@@ -11,10 +10,10 @@ class VariationalProective:
 class Ritz(VariationalProective):
     def __init__(self):
         super().__init__()
-    
+
     @classmethod
     def solve(cls):
-        raise NotImplementedError('Ritz')
+        raise NotImplementedError("Ritz")
 
 
 class Collocation(VariationalProective):
@@ -23,20 +22,23 @@ class Collocation(VariationalProective):
 
     @classmethod
     def solve(cls):
-        raise NotImplementedError('Collocation')
+        raise NotImplementedError("Collocation")
+
 
 class LeastSquares(VariationalProective):
     def __init__(self):
         super().__init__()
-    
+
     @classmethod
     def solve(cls):
-        raise NotImplementedError('Least Squares')
+        raise NotImplementedError("Least Squares")
+
 
 class BubnovGalerkin(VariationalProective):
     def __init__(self):
         super().__init__()
-    
+
     @classmethod
     def solve(cls):
-        raise NotImplementedError('BubnovGalerkin')
+        raise NotImplementedError("BubnovGalerkin")
+
