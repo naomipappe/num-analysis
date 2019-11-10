@@ -123,23 +123,23 @@ def L(x: float) -> float:
     return (
         (-1)
         * (
-            dk().lambdify(variable, "numpy")(x)
-            * solution_exact_dx().lambdify(variable, "numpy")(x)
-            + k().lambdify(variable, "numpy")(x)
-            * solution_exact_d2x().lambdify(variable, "numpy")(x)
+            lambdify(variable, dk(), "numpy")(x)
+            * lambdify(variable, solution_exact_dx(), "numpy")(x)
+            + lambdify(variable, k(), "numpy")(x)
+            * lambdify(variable, solution_exact_d2x(), "numpy")(x)
         )
-        + p(x) * solution_exact_dx().lambdify(variable, "numpy")(x)
-        + q(x) * solution_exact().lambdify(variable, "numpy")(x)
+        + p(x) * lambdify(variable, solution_exact_dx(), "numpy")(x)
+        + q(x) * lambdify(variable, solution_exact(), "numpy")(x)
     )
 
 
 def L_Ritz(x: float) -> float:
     return (-1) * (
-        dk.lambdify(variable, "numpy")(x)
-        * solution_exact_dx.lambdify(variable, "numpy")(x)
-        + k().lambdify(variable, "numpy")(x)
-        * solution_exact_d2x.lambdify(variable, "numpy")(x)
-    ) + q(x) * solution_exact.lambdify(variable, "numpy")(x)
+        lambdify(variable, dk(), "numpy")(x)
+        * lambdify(variable, solution_exact_dx(), "numpy")(x)
+        + lambdify(variable, k(), "numpy")(x)
+        * lambdify(variable, solution_exact_d2x(), "numpy")(x)
+    ) + q(x) * lambdify(variable, solution_exact(), "numpy")(x)
 
 
 def main():
@@ -170,6 +170,19 @@ def main():
         +p(x) * tst.get_first_derivative_function(0)(x)
         +q(x) * tst.get_function(0)(x)
 
+    def L_Ritz_zero(x: float) -> float:
+        return (-1) * (
+            lambdify(variable, dk(), "numpy")(x)
+            * tst.get_first_derivative_function(0)(x)
+            + lambdify(variable, k(), "numpy")(x)
+            * tst.get_second_derivative_function(0)(x)
+        ) + q(x) * tst.get_function(0)(x)
+
+    def newL(x: float) -> float:
+        return L(x) - L_basis_zero(x)
+    
+    def new_Ritz_l(x:float)->float:
+        return L_Ritz(x) - L_Ritz_zero(x)
 
 
 if __name__ == "__main__":
