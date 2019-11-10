@@ -117,8 +117,27 @@ def mu_2():
     )
 
 
-def L():
-    pass
+def L(x: float) -> float:
+    return (
+        (-1)
+        * (
+            dk().lambdify(variable, "numpy")(x)
+            * solution_exact_dx().lambdify(variable, "numpy")(x)
+            + k().lambdify(variable, "numpy")(x)
+            * solution_exact_d2x().lambdify(variable, "numpy")(x)
+        )
+        + p(x) * solution_exact_dx().lambdify(variable, "numpy")(x)
+        + q(x) * solution_exact().lambdify(variable, "numpy")(x)
+    )
+
+
+def L_Ritz(x: float) -> float:
+    return (-1) * (
+        dk.lambdify(variable, "numpy")(x)
+        * solution_exact_dx.lambdify(variable, "numpy")(x)
+        + k().lambdify(variable, "numpy")(x)
+        * solution_exact_d2x.lambdify(variable, "numpy")(x)
+    ) + q(x) * solution_exact.lambdify(variable, "numpy")(x)
 
 
 def main():
@@ -138,6 +157,16 @@ def main():
     }
     n = 10
     tst = BasisFunction(context)
+    def L_basis_zero(x:float)->float:
+        return  (-1) * (
+            dk().lambdify(variable, "numpy")(x)
+            * tst.get_first_derivative_function(0)(x)
+            + k().lambdify(variable, "numpy")(x)
+            * tst.get_second_derivative_function(0)(x)
+        )
+        + p(x) * tst.get_first_derivative_function(0)(x)
+        + q(x) * tst.get_function(0)(x)
+    print(k_dx)
 
 
 if __name__ == "__main__":
