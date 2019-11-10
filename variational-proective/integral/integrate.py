@@ -14,19 +14,6 @@ class Integral:
     def integrate(self, tolerance: float, strategy: Type[IntegrationStrategy], formula: Type[QuadraticFormula]):
         integral, step, error = strategy.calculate(self.integrand, formula, self.borders, tolerance,
                                                    self.integrand_nth_derivative)
-        print()
-        print(formula.description())
-        print(strategy.description())
-        print(f"Integral of function over interval [{self.borders[0]},{self.borders[1]}]")
-        print(f'I = {integral}')
-        if isinstance(step, list):
-            steps_info = ' '.join(map(str, step))
-            min_step = min(step)
-            print('Integration steps:', steps_info)
-            print('Minimal step:', min_step)
-        else:
-            print('Integration step:', step)
-        print('Error:', error)
         return integral
 
     @property

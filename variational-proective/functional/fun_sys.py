@@ -53,7 +53,7 @@ class BasisFunction(FunctionalSystem):
         if k == 0:
             return self.__basic_zero
         elif k == 1:
-            return lambda x: (x - self.__C)(x - self.__borders[0]) ** 2
+            return lambda x: (x - self.__C)*(x - self.__borders[0]) ** 2
         elif k == 2:
             return lambda x: (x - self.__D) * (self.__borders[1] - x) ** 2
         else:
@@ -72,7 +72,7 @@ class BasisFunction(FunctionalSystem):
             return lambda x: (k - 1) * ((x - self.__borders[0]) ** (k - 2)) * (
                 (self.__borders[1] - x)
             ) ** 2 + ((x - self.__borders[0]) ** (k - 1)) * (
-                (self.__borders[1] - x) ** (-2)
+                (self.__borders[1] - x) * (-2)
             )
 
     def get_second_derivative_function(self, k):
@@ -99,7 +99,7 @@ class BasisFunction(FunctionalSystem):
             )
 
     def __basic_zero(self, x: float) -> float:
-        return self._A_psi() * x + self._B_psi()
+        return self.__A_psi() * x + self.__B_psi()
 
     def __A_psi(self) -> float:
         return (
@@ -120,7 +120,7 @@ class BasisFunction(FunctionalSystem):
     def __B_psi(self) -> float:
         return (
             self.context["mu_2"]()
-            - self._A_psi()
+            - self.__A_psi()
             * (
                 self.__k(self.__borders[1])
                 + self.__constants["alpha_2"] * self.__borders[1]
@@ -128,7 +128,7 @@ class BasisFunction(FunctionalSystem):
         ) / self.__constants["alpha_2"]
 
     def __d_basic_zero(self, x: float) -> float:
-        return self._A_psi()
+        return self.__A_psi()
 
     def __d2_basic_zero(self, x: float) -> float:
         return 0
@@ -147,4 +147,4 @@ class BasisFunction(FunctionalSystem):
         )
 
     def __d2_basic_second(self, x: float) -> float:
-        return 2 * (x - self.__D) - 4(self.__borders[1] - x)
+        return 2 * (x - self.__D) - 4*(self.__borders[1] - x)

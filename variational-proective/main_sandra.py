@@ -9,6 +9,9 @@ from sympy.parsing.sympy_parser import (
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
 from sympy import lambdify
+from methods.methods import Ritz
+from integral.integration_formulas import SimpsonsRule
+from integral.integration_strategy import RungeStrategy
 
 variable = symbols("x")
 
@@ -144,6 +147,7 @@ def L_Ritz(x: float) -> float:
 
 def main():
     context = {
+        "variable": variable,
         "borders": borders,
         "constants": constants,
         "k(x)": k,
@@ -180,9 +184,14 @@ def main():
 
     def newL(x: float) -> float:
         return L(x) - L_basis_zero(x)
-    
-    def new_Ritz_l(x:float)->float:
+
+    def new_Ritz_L(x: float) -> float:
         return L_Ritz(x) - L_Ritz_zero(x)
+
+    context['new_Ritz_L'] = new_Ritz_L
+    Ritz.set_functional_system(tst)
+    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    Ritz.solve(context, n)
 
 
 if __name__ == "__main__":
