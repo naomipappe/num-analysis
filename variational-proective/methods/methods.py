@@ -5,6 +5,7 @@ from typing import Type, Tuple, Callable
 from sympy import lambdify
 from functional.fun_sys import FunctionalSystem
 import numpy as np
+from scipy import integrate
 
 
 class VariationalProective:
@@ -16,7 +17,9 @@ class VariationalProective:
     integral = Integral()
 
     @classmethod
-    def solve(cls, context: dict, n: int) -> Tuple[Callable[[float], float], list]:
+    def solve(
+        cls, context: dict, n: int, tolerance=1e-3
+    ) -> Tuple[Callable[[float], float], list]:
         raise NotImplementedError
 
     @classmethod
@@ -33,83 +36,70 @@ class VariationalProective:
 
 class Ritz(VariationalProective):
     @classmethod
-    def solve(
-        cls, context: dict, n: int, tolerance: float = 1e-3
-    ) -> Tuple[Callable[[float], float], list]:
-        cls.integral.borders = context["borders"]
+    def solve(cls, context: dict, n: int, tolerance: float or None):
         cls.context = context
-        cls.constants = context["constants"]
-
-        E = np.zeros((n, n))
-        for i in range(0, n):
-            for j in range(0, n):
-                E[i][j] = cls.__G_function(i + 1, j + 1, tolerance)
-
-        F = np.zeros((n, 1))
-        for i in range(0, n):
-            F[i] = cls.__L_function(cls.fsys.get_function(i + 1))
-
-        coeficients = np.linalg.solve(E, F)
-        error = F - np.dot(E, coeficients)
-
+        if tolerance is None:
+            tolerance = 1e-3
+        cls.integral.borders = context["borders"]
+        matrix, vector, phi_funcs = cls.build_system(n, tolerance)
+        coeficients = np.linalg.solve(matrix, vector)
+        error = vector - np.dot(matrix, coeficients)
+        print(np.linalg.norm(error))
         def approximation(x: float) -> float:
-            return cls.fsys.basic_zero(x) + sum(
+            return lambdify(
+                cls.context["variable"], cls.fsys.get_basic_zero(), "numpy"
+            )(x) + sum([coeficients[i] * phi_funcs[i](x) for i in range(n)])
+
+        return approximation
+
+    @classmethod
+    def build_system(cls, n: int, tolerance):
+        modified_f_expr = lambdify(
+            cls.context["variable"],
+            cls.context["L"](
+                cls.context["solution_exact_expr"], cls.context["variable"]
+            ).simplify()
+            - cls.context["L"](
+                cls.fsys.get_basic_zero(), cls.context["variable"]
+            ).simplify(),
+            "numpy",
+        )
+        phi_funcs = [
+            lambdify(cls.context["variable"], cls.fsys.get_function(i), "numpy")
+            for i in range(n)
+        ]
+        L_phi_funcs = [
+            lambdify(
+                cls.context["variable"],
+                cls.context["L"](cls.fsys.get_function(i), cls.context["variable"]),
+                "numpy",
+            )
+            for i in range(n)
+        ]
+        matrix = np.matrix(
+            [
                 [
-                    coeficients[i] * cls.fsys.get_function(i + 1)(x)
-                    for i in range(len(coeficients))
+                    cls.integration(L_phi_funcs[j], phi_funcs[i], tolerance)
+                    for j in range(n)
                 ]
-            )
-
-        return approximation, error
+                for i in range(n)
+            ]
+        )
+        vector = [
+            cls.integration(modified_f_expr, phi_funcs[i], tolerance) for i in range(n)
+        ]
+        return matrix, vector, phi_funcs
 
     @classmethod
-    def __G_function(cls, i: int, j: int, tolerance: float or None = None) -> float:
-        if tolerance == None:
-            tolerance = 1e-3
-
-        def g(x: float):
-            return (
-                lambdify(cls.context["variable"], cls.context["k(x)"](), "numpy")(x)
-                * cls.fsys.get_first_derivative_function(i)(x)
-                * cls.fsys.get_first_derivative_function(j)(x)
-            )
-            +cls.context["q(x)"](x) * cls.fsys.get_function(i)(
-                x
-            ) * cls.fsys.get_function(j)(x)
-
-        cls.integral.integrand = g
-        result = cls.integral.integrate(tolerance, cls.strategy, cls.formula)
-        result += (
-            cls.constants["alpha_1"]
-            * cls.fsys.get_function(i)(cls.integral.borders[0])
-            * cls.fsys.get_function(j)(cls.integral.borders[0])
-        )
-        result += (
-            cls.constants["alpha_2"]
-            * cls.fsys.get_function(i)(cls.integral.borders[1])
-            * cls.fsys.get_function(j)(cls.integral.borders[1])
-        )
-        return result
-
-    @classmethod
-    def __L_function(
-        cls, v: Callable[[float], float], tolerance: float or None = None
+    def integration(
+        cls, f: Callable[[float], float], g: Callable[[float], float], tolerance: float
     ) -> float:
-        if tolerance == None:
-            tolerance = 1e-3
-
-        def l(x: float) -> float:
-            return cls.context["new_Ritz_L"](x) * v(x)
-
-        cls.integral.integrand = l
-        result = cls.integral.integrate(tolerance, cls.strategy, cls.formula)
-        return result
+        cls.integral.integrand = lambda x: f(x) * g(x)
+        return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
 
 
 class Collocation(VariationalProective):
-    @classmethod
-    def solve(cls):
-        raise NotImplementedError("Collocation")
+    pass
 
 
 class LeastSquares(VariationalProective):

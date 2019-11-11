@@ -9,21 +9,19 @@ from sympy.parsing.sympy_parser import (
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
 from sympy import lambdify
-from methods.methods import Ritz
+from methods.methods import Ritz, Collocation
 from integral.integration_formulas import SimpsonsRule
 from integral.integration_strategy import RungeStrategy
 from utilities.util import plotter
 
 variable = symbols("x")
 
-borders = (1, 2)
+a, b = 1, 2
 
 constants = {
     "m1": 1,
     "m2": 2,
     "m3": 1,
-    "m4": 6,
-    "m5": 3,
     "p1": 2,
     "p2": 1,
     "p3": 2,
@@ -38,154 +36,95 @@ constants = {
 }
 
 solution_exact_expression = parse_expr(
-    f'{constants["m1"]}*sin({constants["m2"]}*x)+{constants["m3"]}', evaluate=False
+    f'{constants["m1"]}*sin({constants["m2"]}*x)+{constants["m3"]}', evaluate=True
 )
 solution_exact_expression_dx = solution_exact_expression.diff(variable)
 solution_exact_expression_d2x = solution_exact_expression.diff(variable, 2)
 
 k_expression = parse_expr(
-    f'{constants["k1"]}*(x**{constants["k2"]})+{constants["k3"]}', evaluate=False
+    f'{constants["k1"]}*(x**{constants["k2"]})+{constants["k3"]}', evaluate=True
 )
-k_dx = k_expression.diff(variable)
+k_expresion_dx = k_expression.diff(variable)
+
+p_expression = parse_expr(
+    f'{constants["p1"]} * (x ** {constants["p2"]}) + {constants["p3"]}'
+)
+
+q_expression = parse_expr(
+    f'{constants["q1"]} * (x ** {constants["q2"]}) + {constants["q3"]}'
+)
 
 
-def solution_exact():
-    return solution_exact_expression
+def solution_exact(x: float) -> float:
+    return lambdify(variable, solution_exact_expression, "numpy")(x)
 
 
-def solution_exact_dx():
-    return solution_exact_expression_dx
+def solution_exact_dx(x: float) -> float:
+    return lambdify(variable, solution_exact_expression_dx, "numpy")(x)
 
 
-def solution_exact_d2x():
-    return solution_exact_expression_d2x
+def solution_exact_d2x(x: float) -> float:
+    return lambdify(variable, solution_exact_expression_d2x, "numpy")(x)
 
 
-def k():
-    return k_expression
+def k(x: float) -> float:
+    return lambdify(variable, k_expression, "numpy")(x)
 
 
-def dk():
-    return k_dx
+def dk(x: float) -> float:
+    return lambdify(variable, k_expresion_dx, "numpy")(x)
 
 
 def p(x: float) -> float:
-    return constants["p1"] * (x ** constants["p2"]) + constants["p3"]
+    return lambdify(variable, p_expression, "numpy")
 
 
 def q(x: float) -> float:
-    return constants["q1"] * (x ** constants["q2"]) + constants["q3"]
+    return lambdify(variable, q_expression, "numpy")
 
 
-def f(x: float):
+def mu_1() -> float:
+    return -k(a) * solution_exact_dx(a) + constants["alpha_1"] * solution_exact(a)
+
+
+def mu_2() -> float:
+    return k(b) * solution_exact_dx(b) + constants["alpha_2"] * solution_exact(b)
+
+
+def L_operator(u, variable):
     return (
-        -constants["k1"]
-        * (x ** constants["k2"])
-        * constants["k2"]
-        * constants["m1"]
-        * constants["m2"]
-        * cos(constants["m2"] * x)
-        / x
-        + (constants["k1"] * (x ** constants["k2"]) + constants["k3"])
-        * constants["m1"]
-        * (constants["m2"] ** 2)
-        * sin(constants["m2"] * x)
-        + (constants["p1"] * (x ** constants["p2"]) + constants["p3"])
-        * constants["m1"]
-        * constants["m2"]
-        * cos(constants["m2"] * x)
-        + (constants["q1"] * (x ** constants["q2"]) + constants["q3"])
-        * (constants["m1"] * sin(constants["m2"] * x) + constants["m3"])
+        -(k_expression * (u.diff(variable))).diff(variable)
+        + p_expression * (u.diff(variable))
+        + q_expression * u
     )
-
-
-def mu_1(x: float) -> float:
-    return -lambdify(variable, k(), "numpy")(x) * lambdify(
-        variable, solution_exact_dx(), "numpy"
-    )(x) + constants["alpha_1"] * lambdify(variable, solution_exact(), "numpy")(x)
-
-
-def mu_2(x: float) -> float:
-    return lambdify(variable, k(), "numpy")(x) * lambdify(
-        variable, solution_exact_dx(), "numpy"
-    )(x) + constants["alpha_2"] * lambdify(variable, solution_exact(), "numpy")(x)
-
-
-def L(x: float) -> float:
-    return (
-        (-1)
-        * (
-            lambdify(variable, dk(), "numpy")(x)
-            * lambdify(variable, solution_exact_dx(), "numpy")(x)
-            + lambdify(variable, k(), "numpy")(x)
-            * lambdify(variable, solution_exact_d2x(), "numpy")(x)
-        )
-        + p(x) * lambdify(variable, solution_exact_dx(), "numpy")(x)
-        + q(x) * lambdify(variable, solution_exact(), "numpy")(x)
-    )
-
-
-def L_Ritz(x: float) -> float:
-    return (-1) * (
-        lambdify(variable, dk(), "numpy")(x)
-        * lambdify(variable, solution_exact_dx(), "numpy")(x)
-        + lambdify(variable, k(), "numpy")(x)
-        * lambdify(variable, solution_exact_d2x(), "numpy")(x)
-    ) + q(x) * lambdify(variable, solution_exact(), "numpy")(x)
 
 
 def main():
     context = {
         "variable": variable,
-        "borders": borders,
+        "borders": (a, b),
         "constants": constants,
         "k(x)": k,
         "dk/dx": dk,
         "p(x)": p,
         "q(x)": q,
-        "f(x)": f,
         "mu_1": mu_1,
         "mu_2": mu_2,
-        "solution_exact": solution_exact,
-        "solution_exact_dx": solution_exact_dx,
-        "solution_exact_d2x": solution_exact_d2x,
+        "L": L_operator,
+        "solution_exact_expr": solution_exact_expression,
     }
-    n = 15
+    n = 30
     tst = BasisFunction(context)
-
-    def L_basis_zero(x: float) -> float:
-        return (-1) * (
-            lambdify(variable, dk(), "numpy")(x) * tst.d_basic_zero(x)
-            + lambdify(variable, k(), "numpy")(x) * tst.d2_basic_zero(x)
-        )
-        +p(x) * tst.d_basic_zero(x)
-        +q(x) * tst.basic_zero(x)
-
-    def L_Ritz_zero(x: float) -> float:
-        return (-1) * (
-            lambdify(variable, dk(), "numpy")(x) * tst.d_basic_zero(x)
-            + lambdify(variable, k(), "numpy")(x) * tst.d2_basic_zero(x)
-        ) + q(x) * tst.basic_zero(x)
-
-    def newL(x: float) -> float:
-        return L(x) - L_basis_zero(x)
-
-    def new_Ritz_L(x: float) -> float:
-        return L_Ritz(x) - L_Ritz_zero(x)
-
-    context["new_Ritz_L"] = new_Ritz_L
     Ritz.set_functional_system(tst)
     Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
-    approximation, error = Ritz.solve(context, n, 1e-4)
+    nodes = linspace(a, b, 10**4, endpoint=True)
+    # # Collocation.set_nodes(nodes)
+    approximation = Ritz.solve(context, n, 1e-4)
     plotter(
-        linspace(*borders, 10 ** 4, endpoint=True),
-        lambdify(variable, solution_exact(), "numpy"),
-        approximation,
-        save=False,
+        nodes, solution_exact, approximation, save=False,
     )
-    print(abs(error))
-    print(abs(mu_1(borders[0])-approximation(borders[0])))
-    print(abs(mu_1(borders[1])-approximation(borders[1])))
+    
+
 
 if __name__ == "__main__":
     main()
