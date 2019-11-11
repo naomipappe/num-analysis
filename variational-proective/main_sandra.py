@@ -1,4 +1,4 @@
-from numpy import sin, cos, pi
+from numpy import sin, cos, pi, linspace
 from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
     parse_expr,
@@ -12,6 +12,7 @@ from sympy import lambdify
 from methods.methods import Ritz
 from integral.integration_formulas import SimpsonsRule
 from integral.integration_strategy import RungeStrategy
+from utilities.util import plotter
 
 variable = symbols("x")
 
@@ -98,28 +99,16 @@ def f(x: float):
     )
 
 
-def mu_1():
-    return -(
-        constants["k1"] * (borders[0] ** constants["k2"]) + constants["k3"]
-    ) * constants["m1"] * constants["m2"] * cos(
-        constants["m2"] * borders[0]
-    ) + constants[
-        "alpha_1"
-    ] * (
-        constants["m1"] * sin(constants["m2"] * borders[0]) + constants["m3"]
-    )
+def mu_1(x: float) -> float:
+    return -lambdify(variable, k(), "numpy")(x) * lambdify(
+        variable, solution_exact_dx(), "numpy"
+    )(x) + constants["alpha_1"] * lambdify(variable, solution_exact(), "numpy")(x)
 
 
-def mu_2():
-    return (
-        constants["k1"] * (borders[1] ** constants["k2"]) + constants["k3"]
-    ) * constants["m1"] * constants["m2"] * cos(
-        constants["m2"] * borders[1]
-    ) + constants[
-        "alpha_2"
-    ] * (
-        constants["m1"] * sin(constants["m2"] * borders[1]) + constants["m3"]
-    )
+def mu_2(x: float) -> float:
+    return lambdify(variable, k(), "numpy")(x) * lambdify(
+        variable, solution_exact_dx(), "numpy"
+    )(x) + constants["alpha_2"] * lambdify(variable, solution_exact(), "numpy")(x)
 
 
 def L(x: float) -> float:
@@ -161,26 +150,22 @@ def main():
         "solution_exact_dx": solution_exact_dx,
         "solution_exact_d2x": solution_exact_d2x,
     }
-    n = 10
+    n = 15
     tst = BasisFunction(context)
 
     def L_basis_zero(x: float) -> float:
         return (-1) * (
-            lambdify(variable, dk(), "numpy")(x)
-            * tst.get_first_derivative_function(0)(x)
-            + lambdify(variable, k(), "numpy")(x)
-            * tst.get_second_derivative_function(0)(x)
+            lambdify(variable, dk(), "numpy")(x) * tst.d_basic_zero(x)
+            + lambdify(variable, k(), "numpy")(x) * tst.d2_basic_zero(x)
         )
-        +p(x) * tst.get_first_derivative_function(0)(x)
-        +q(x) * tst.get_function(0)(x)
+        +p(x) * tst.d_basic_zero(x)
+        +q(x) * tst.basic_zero(x)
 
     def L_Ritz_zero(x: float) -> float:
         return (-1) * (
-            lambdify(variable, dk(), "numpy")(x)
-            * tst.get_first_derivative_function(0)(x)
-            + lambdify(variable, k(), "numpy")(x)
-            * tst.get_second_derivative_function(0)(x)
-        ) + q(x) * tst.get_function(0)(x)
+            lambdify(variable, dk(), "numpy")(x) * tst.d_basic_zero(x)
+            + lambdify(variable, k(), "numpy")(x) * tst.d2_basic_zero(x)
+        ) + q(x) * tst.basic_zero(x)
 
     def newL(x: float) -> float:
         return L(x) - L_basis_zero(x)
@@ -188,11 +173,19 @@ def main():
     def new_Ritz_L(x: float) -> float:
         return L_Ritz(x) - L_Ritz_zero(x)
 
-    context['new_Ritz_L'] = new_Ritz_L
+    context["new_Ritz_L"] = new_Ritz_L
     Ritz.set_functional_system(tst)
     Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
-    Ritz.solve(context, n)
-
+    approximation, error = Ritz.solve(context, n, 1e-4)
+    plotter(
+        linspace(*borders, 10 ** 4, endpoint=True),
+        lambdify(variable, solution_exact(), "numpy"),
+        approximation,
+        save=False,
+    )
+    print(abs(error))
+    print(abs(mu_1(borders[0])-approximation(borders[0])))
+    print(abs(mu_1(borders[1])-approximation(borders[1])))
 
 if __name__ == "__main__":
     main()
