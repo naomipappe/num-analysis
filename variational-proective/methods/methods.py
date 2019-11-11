@@ -41,7 +41,7 @@ class Ritz(VariationalProective):
         if tolerance is None:
             tolerance = 1e-3
         cls.integral.borders = context["borders"]
-        matrix, vector, phi_funcs = cls.build_system(n, tolerance)
+        matrix, vector, phi_funcs = cls.__build_system(n, tolerance)
         coeficients = np.linalg.solve(matrix, vector)
         error = vector - np.dot(matrix, coeficients)
         print(np.linalg.norm(error))
@@ -53,7 +53,7 @@ class Ritz(VariationalProective):
         return approximation
 
     @classmethod
-    def build_system(cls, n: int, tolerance):
+    def __build_system(cls, n: int, tolerance):
         modified_f_expr = lambdify(
             cls.context["variable"],
             cls.context["L"](
@@ -79,24 +79,24 @@ class Ritz(VariationalProective):
         matrix = np.matrix(
             [
                 [
-                    cls.integration(L_phi_funcs[j], phi_funcs[i], tolerance)
+                    cls.__integration(L_phi_funcs[j], phi_funcs[i], tolerance)
                     for j in range(n)
                 ]
                 for i in range(n)
             ]
         )
         vector = [
-            cls.integration(modified_f_expr, phi_funcs[i], tolerance) for i in range(n)
+            cls.__integration(modified_f_expr, phi_funcs[i], tolerance) for i in range(n)
         ]
         return matrix, vector, phi_funcs
 
     @classmethod
-    def integration(
+    def __integration(
         cls, f: Callable[[float], float], g: Callable[[float], float], tolerance: float
     ) -> float:
         cls.integral.integrand = lambda x: f(x) * g(x)
-        #return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
-        return integrate.quad(cls.integral.integrand,*cls.integral.borders)[0]
+        return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        #return integrate.quad(cls.integral.integrand,*cls.integral.borders)[0]
 
 
 class Collocation(VariationalProective):

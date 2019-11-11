@@ -13,13 +13,6 @@ class FunctionalSystem:
     def get_basic_zero(self):
         raise NotImplementedError
 
-    def get_first_derivative_function(self, k: int):
-        raise NotImplementedError
-
-    def get_second_derivative_function(self, k: int):
-        raise NotImplementedError
-
-
 class BasisFunction(FunctionalSystem):
     def __init__(self, context):
         super().__init__(context)
@@ -43,22 +36,33 @@ class BasisFunction(FunctionalSystem):
                 + self.__constants["alpha_1"] * (self.__b - self.__a)
             )
         )
-        self.__A_psi = (
-            context["mu_1"]()
-            - context["mu_2"]()
-            * self.__constants["alpha_1"]
-            / self.__constants["alpha_2"]
-        ) / (
-            -self.context["k(x)"](self.__a)
-            + self.__constants["alpha_1"] * self.__a
-            - (self.__constants["alpha_1"] / self.__constants["alpha_2"])
-            * (self.context["k(x)"](self.__b) + self.__constants["alpha_2"] * self.__b)
-        )
-        self.__B_psi = (
-            self.context["mu_2"]()
-            - self.__A_psi
-            * (self.context["k(x)"](self.__b) + self.__constants["alpha_2"] * self.__b)
-        ) / self.__constants["alpha_2"]
+        #check if we have a homogeneous
+        if context["mu_1"]() == 0 and context["mu_2"] == 0:
+            self.__A_psi = 0
+            self.__B_psi = 0
+        else:
+            self.__A_psi = (
+                context["mu_1"]()
+                - context["mu_2"]()
+                * self.__constants["alpha_1"]
+                / self.__constants["alpha_2"]
+            ) / (
+                -self.context["k(x)"](self.__a)
+                + self.__constants["alpha_1"] * self.__a
+                - (self.__constants["alpha_1"] / self.__constants["alpha_2"])
+                * (
+                    self.context["k(x)"](self.__b)
+                    + self.__constants["alpha_2"] * self.__b
+                )
+            )
+            self.__B_psi = (
+                self.context["mu_2"]()
+                - self.__A_psi
+                * (
+                    self.context["k(x)"](self.__b)
+                    + self.__constants["alpha_2"] * self.__b
+                )
+            ) / self.__constants["alpha_2"]
 
     def get_basic_zero(self):
         return self.__A_psi * self.__x + self.__B_psi

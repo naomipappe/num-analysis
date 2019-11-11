@@ -32,14 +32,14 @@ class AprioriEstimationStrategy(IntegrationStrategy):
         if integrand_nth_derivative is None:
             raise ValueError('N-th derivative should not be None')
 
-        error, step = cls.apriori_estimation(integration_borders, quadratic_formula,
+        error, step = cls.__apriori_estimation(integration_borders, quadratic_formula,
                                              integrand_nth_derivative, tolerance)
         integral = quadratic_formula.value_composite(integration_borders, integrand, step)
 
         return integral, step, error
 
     @classmethod
-    def apriori_estimation(cls, integration_borders: tuple, quadratic_formula: Type[QuadraticFormula],
+    def __apriori_estimation(cls, integration_borders: tuple, quadratic_formula: Type[QuadraticFormula],
                            integrand_nth_derivative: Callable[[float], float], tolerance: float) -> tuple:
         values = vectorize(integrand_nth_derivative)(linspace(*integration_borders, 10 ** 5))
         dnf_measure = max(abs(values))
@@ -67,12 +67,12 @@ class RungeStrategy(IntegrationStrategy):
             integral_prev = integral_next
             integral_next = quadratic_formula.value_composite(integration_borders, integrand, step)
 
-        integral_next = cls._richardson_clarification(integral_next, integral_prev, algebraic_precision)
+        integral_next = cls.__richardson_clarification(integral_next, integral_prev, algebraic_precision)
 
         return integral_next, step, _aposteriori_error_estimation(integral_prev, integral_next, algebraic_precision)
 
     @classmethod
-    def _richardson_clarification(cls, integral_prev: float, integral_next: float, algebraic_precision: int) -> float:
+    def __richardson_clarification(cls, integral_prev: float, integral_next: float, algebraic_precision: int) -> float:
         return 2 ** algebraic_precision / (2 ** algebraic_precision - 1) \
                * integral_next - 1 / (2 ** algebraic_precision - 1) * integral_prev
 
@@ -89,17 +89,17 @@ class AdaptiveStrategy(IntegrationStrategy):
         left_border, right_border = integration_borders
         step = (right_border - left_border) / 10
         adaptive_steps = []
-        integral_next, integral_prev = cls.adaptive_iteration(integrand, left_border, quadratic_formula, step)
+        integral_next, integral_prev = cls.__adaptive_iteration(integrand, left_border, quadratic_formula, step)
         while left_border != right_border:
             if (left_border + step) > right_border:
                 step = right_border - left_border
 
-            integral_next, integral_prev = cls.adaptive_iteration(integrand, left_border, quadratic_formula, step)
+            integral_next, integral_prev = cls.__adaptive_iteration(integrand, left_border, quadratic_formula, step)
 
             while _aposteriori_error_estimation(integral_prev, integral_next,
                                                 algebraic_precision) > step * tolerance / (right_border - left_border):
                 step /= 2
-                integral_next, integral_prev = cls.adaptive_iteration(integrand, left_border, quadratic_formula, step)
+                integral_next, integral_prev = cls.__adaptive_iteration(integrand, left_border, quadratic_formula, step)
 
             adaptive_steps.append(step)
             left_border += step
@@ -110,7 +110,7 @@ class AdaptiveStrategy(IntegrationStrategy):
                                                                        algebraic_precision)
 
     @classmethod
-    def adaptive_iteration(cls, integrand, left_border, quadratic_formula, step):
+    def __adaptive_iteration(cls, integrand, left_border, quadratic_formula, step):
         integral_prev = quadratic_formula.value_simple((left_border, left_border + step), integrand)
         integral_next = quadratic_formula.value_simple((left_border, left_border + step / 2), integrand) + \
                         quadratic_formula.value_simple((left_border + step / 2, left_border + step), integrand)

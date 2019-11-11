@@ -10,8 +10,8 @@ transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
 from sympy import lambdify
 from methods.methods import Ritz, Collocation
-from integral.integration_formulas import SimpsonsRule
-from integral.integration_strategy import RungeStrategy
+from integral.integration_formulas import SimpsonsRule, MeanRectangleFormula, TrapezoidalFormula
+from integral.integration_strategy import RungeStrategy, AdaptiveStrategy, AprioriEstimationStrategy
 from utilities.util import plotter
 
 variable = symbols("x")
@@ -116,7 +116,7 @@ def main():
     n = 30
     tst = BasisFunction(context)
     Ritz.set_functional_system(tst)
-    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    Ritz.set_integration_method(SimpsonsRule, AdaptiveStrategy)
     nodes = linspace(a, b, 10**4, endpoint=True)
     # # Collocation.set_nodes(nodes)
     approximation = Ritz.solve(context, n, 1e-6)
