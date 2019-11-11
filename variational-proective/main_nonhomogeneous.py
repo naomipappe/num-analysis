@@ -119,7 +119,7 @@ def main():
     Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
     nodes = linspace(a, b, 10**4, endpoint=True)
     # # Collocation.set_nodes(nodes)
-    approximation = Ritz.solve(context, n, 1e-4)
+    approximation = Ritz.solve(context, n, 1e-6)
     plotter(
         nodes, solution_exact, approximation, save=False,
     )

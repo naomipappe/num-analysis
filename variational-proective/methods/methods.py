@@ -95,7 +95,8 @@ class Ritz(VariationalProective):
         cls, f: Callable[[float], float], g: Callable[[float], float], tolerance: float
     ) -> float:
         cls.integral.integrand = lambda x: f(x) * g(x)
-        return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
+        #return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        return integrate.quad(cls.integral.integrand,*cls.integral.borders)[0]
 
 
 class Collocation(VariationalProective):
