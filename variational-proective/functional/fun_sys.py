@@ -13,6 +13,9 @@ class FunctionalSystem:
     def get_basic_zero(self):
         raise NotImplementedError
 
+    def get_derrivative(self, k:int, order:int):
+        raise NotImplementedError
+
 class BasisFunction(FunctionalSystem):
     def __init__(self, context):
         super().__init__(context)
@@ -25,7 +28,7 @@ class BasisFunction(FunctionalSystem):
             * (self.__b - self.__a)
             / (
                 2 * context["k(x)"](self.__b)
-                + self.__constants["alpha_2"] * (self.__b - self.__a)
+                + self.__constants["delta"] * (self.__b - self.__a)
             )
         )
         self.__D = self.__a - (
@@ -33,7 +36,7 @@ class BasisFunction(FunctionalSystem):
             * (self.__b - self.__a)
             / (
                 2 * context["k(x)"](self.__a)
-                + self.__constants["alpha_1"] * (self.__b - self.__a)
+                + self.__constants["beta"] * (self.__b - self.__a)
             )
         )
         #check if we have a homogeneous
@@ -44,15 +47,15 @@ class BasisFunction(FunctionalSystem):
             self.__A_psi = (
                 context["mu_1"]()
                 - context["mu_2"]()
-                * self.__constants["alpha_1"]
-                / self.__constants["alpha_2"]
+                * self.__constants["beta"]
+                / self.__constants["delta"]
             ) / (
                 -self.context["k(x)"](self.__a)
-                + self.__constants["alpha_1"] * self.__a
-                - (self.__constants["alpha_1"] / self.__constants["alpha_2"])
+                + self.__constants["beta"] * self.__a
+                - (self.__constants["beta"] / self.__constants["delta"])
                 * (
                     self.context["k(x)"](self.__b)
-                    + self.__constants["alpha_2"] * self.__b
+                    + self.__constants["delta"] * self.__b
                 )
             )
             self.__B_psi = (
@@ -60,9 +63,9 @@ class BasisFunction(FunctionalSystem):
                 - self.__A_psi
                 * (
                     self.context["k(x)"](self.__b)
-                    + self.__constants["alpha_2"] * self.__b
+                    + self.__constants["delta"] * self.__b
                 )
-            ) / self.__constants["alpha_2"]
+            ) / self.__constants["delta"]
 
     def get_basic_zero(self):
         return self.__A_psi * self.__x + self.__B_psi
@@ -75,3 +78,5 @@ class BasisFunction(FunctionalSystem):
         else:
             return ((self.__x - self.__a) ** (k - 1)) * ((self.__b - self.__x) ** 2)
 
+    def get_derrivative(self, k, order):
+        return self.get_function(k).diff(self.__x,order)

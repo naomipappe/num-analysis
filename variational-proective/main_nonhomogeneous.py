@@ -9,9 +9,17 @@ from sympy.parsing.sympy_parser import (
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
 from sympy import lambdify
-from methods.methods import Ritz, Collocation
-from integral.integration_formulas import SimpsonsRule, MeanRectangleFormula, TrapezoidalFormula
-from integral.integration_strategy import RungeStrategy, AdaptiveStrategy, AprioriEstimationStrategy
+from methods.methods import Ritz, Collocation, BubnovGalerkin
+from integral.integration_formulas import (
+    SimpsonsRule,
+    MeanRectangleFormula,
+    TrapezoidalFormula,
+)
+from integral.integration_strategy import (
+    RungeStrategy,
+    AdaptiveStrategy,
+    AprioriEstimationStrategy,
+)
 from utilities.util import plotter
 
 variable = symbols("x")
@@ -31,8 +39,8 @@ constants = {
     "k1": 1,
     "k2": 1,
     "k3": 1,
-    "alpha_1": 6,
-    "alpha_2": 3,
+    "beta": 6,
+    "delta": 3,
 }
 
 solution_exact_expression = parse_expr(
@@ -84,11 +92,11 @@ def q(x: float) -> float:
 
 
 def mu_1() -> float:
-    return -k(a) * solution_exact_dx(a) + constants["alpha_1"] * solution_exact(a)
+    return -k(a) * solution_exact_dx(a) + constants["beta"] * solution_exact(a)
 
 
 def mu_2() -> float:
-    return k(b) * solution_exact_dx(b) + constants["alpha_2"] * solution_exact(b)
+    return k(b) * solution_exact_dx(b) + constants["delta"] * solution_exact(b)
 
 
 def L_operator(u, variable):
@@ -113,17 +121,18 @@ def main():
         "L": L_operator,
         "solution_exact_expr": solution_exact_expression,
     }
-    n = 30
+    constants["alpha"] = -k(a)
+    constants["gamma"] = k(b)
+    n = 2
     tst = BasisFunction(context)
-    Ritz.set_functional_system(tst)
-    Ritz.set_integration_method(SimpsonsRule, AdaptiveStrategy)
-    nodes = linspace(a, b, 10**4, endpoint=True)
-    # # Collocation.set_nodes(nodes)
-    approximation = Ritz.solve(context, n, 1e-6)
+    BubnovGalerkin.set_functional_system(tst)
+    BubnovGalerkin.set_integration_method(SimpsonsRule, RungeStrategy)
+    nodes = linspace(a, b, 100, endpoint=True)
+    # Collocation.set_nodes(nodes)
+    approximation = BubnovGalerkin.solve(context, n, 1e-6)
     plotter(
         nodes, solution_exact, approximation, save=False,
     )
-    
 
 
 if __name__ == "__main__":
