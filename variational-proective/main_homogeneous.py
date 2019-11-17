@@ -7,51 +7,97 @@ from sympy.parsing.sympy_parser import (
 )
 
 transformations = standard_transformations + (implicit_multiplication,)
-from functional.fun_sys import BasisFunction
+from functional.fun_sys import BasisFunction, TestFunction
 from sympy import lambdify
-from methods.methods import Ritz, Collocation
-from integral.integration_formulas import SimpsonsRule, MeanRectangleFormula, TrapezoidalFormula
-from integral.integration_strategy import RungeStrategy, AdaptiveStrategy, AprioriEstimationStrategy
+from methods.methods import Ritz, Collocation, LeastSquares, BubnovGalerkin
+from integral.integration_formulas import (
+    SimpsonsRule,
+    MeanRectangleFormula,
+    TrapezoidalFormula,
+)
+from integral.integration_strategy import (
+    RungeStrategy,
+    AdaptiveStrategy,
+    AprioriEstimationStrategy,
+)
 from utilities.util import plotter
 
 variable = symbols("x")
-
-a, b = 1, 2
-
+a, b = 2, 5
 constants = {
-    "m1": 1,
-    "m2": 2,
-    "m3": 1,
+    "b1": 1,
+    "b2": 2,
+    "b3": 1,
+    "k1": 6,
+    "k2": 3,
+    "c1": 1,
+    "c2": 2,
+    "c3": 1,
     "p1": 2,
     "p2": 1,
-    "p3": 2,
+    "d1": 1,
+    "d2": 1,
+    "d3": 1,
     "q1": 1,
-    "q2": 1,
-    "q3": 1,
-    "k1": 1,
-    "k2": 1,
-    "k3": 1,
-    "alpha_1": 6,
-    "alpha_2": 3,
+    "q2": 0,
+    "a1": 6,
+    "a2": 3,
+    "a3": 1,
+    "a4": 1,
+    "n1": 2,
+    "n2": 1,
+    "n3": 4,
 }
+constants["alpha"] = (
+    (constants["a1"] * (a ** (constants["n1"])))
+    + (constants["a2"] * (a ** (constants["n2"])))
+    + (constants["a3"] * (a ** (constants["n3"])))
+    + constants["a4"]
+)
+constants["beta"] = (
+    (constants["a1"] * constants["n1"] * (a ** (constants["n1"] - 1)))
+    + (constants["a2"] * constants["n2"] * (a ** (constants["n2"] - 1)))
+    + (constants["a3"] * constants["n3"] * (a ** (constants["n3"] - 1)))
+)
+constants["gamma"] = (
+    (constants["a1"] * (b ** (constants["n1"])))
+    + (constants["a2"] * (b ** (constants["n2"])))
+    + (constants["a3"] * (b ** (constants["n3"])))
+    + constants["a4"]
+)
+
+constants["delta"] = -(
+    (constants["a1"] * constants["n1"] * (b ** (constants["n1"] - 1)))
+    + (constants["a2"] * constants["n2"] * (b ** (constants["n2"] - 1)))
+    + (constants["a3"] * constants["n3"] * (b ** (constants["n3"] - 1)))
+)
 
 solution_exact_expression = parse_expr(
-    f'{constants["m1"]}*sin({constants["m2"]}*x)+{constants["m3"]}', evaluate=True
+    f'({constants["a1"]}*x**({constants["n1"]}))+({constants["a2"]}*x**({constants["n2"]})) +\
+         ({constants["a3"]}*x**({constants["n3"]}))+{constants["a4"]}',
+    evaluate=True,
 )
 solution_exact_expression_dx = solution_exact_expression.diff(variable)
 solution_exact_expression_d2x = solution_exact_expression.diff(variable, 2)
 
 k_expression = parse_expr(
-    f'{constants["k1"]}*(x**{constants["k2"]})+{constants["k3"]}', evaluate=True
+    f'{constants["b1"]}*(x**{constants["k1"]})+{constants["b2"]}*(x**{constants["k2"]}) +\
+         {constants["b3"]}',
+    evaluate=True,
 )
 k_expresion_dx = k_expression.diff(variable)
 
-p_expression = parse_expr(
-    f'{constants["p1"]} * (x ** {constants["p2"]}) + {constants["p3"]}'
-)
+# p_expression = parse_expr(
+#     f'{constants["c1"]} * (x ** {constants["p1"]}) + {constants["c2"]}*(x**{constants["p2"]}) +\
+#          {constants["c3"]}',
+#     evaluate=True,
+# )
+p_expression = parse_expr("0", evaluate=True)
 
 q_expression = parse_expr(
-    f'{constants["q1"]} * (x ** {constants["q2"]}) + {constants["q3"]}'
+    f'{constants["d1"]} * (x ** {constants["q1"]}) + {constants["d2"]} * (x**{constants["q2"]}) +\
+         {constants["d3"]}',
+    evaluate=True,
 )
 
 
@@ -84,11 +130,15 @@ def q(x: float) -> float:
 
 
 def mu_1() -> float:
-    return -k(a) * solution_exact_dx(a) + constants["alpha_1"] * solution_exact(a)
+    return constants["alpha"] * solution_exact_dx(a) - constants[
+        "beta"
+    ] * solution_exact(a)
 
 
 def mu_2() -> float:
-    return k(b) * solution_exact_dx(b) + constants["alpha_2"] * solution_exact(b)
+    return constants["gamma"] * solution_exact_dx(b) + constants[
+        "delta"
+    ] * solution_exact(b)
 
 
 def L_operator(u, variable):
@@ -113,17 +163,16 @@ def main():
         "L": L_operator,
         "solution_exact_expr": solution_exact_expression,
     }
-    n = 7
-    tst = BasisFunction(context)
-    Collocation.set_functional_system(tst)
-    #Ritz.set_integration_method(SimpsonsRule, AdaptiveStrategy)
-    nodes = linspace(a, b, 10**4, endpoint=True)
+    n = 10
+    function_system = TestFunction(context)
+    Ritz.set_functional_system(function_system)
+    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    nodes = linspace(a, b, 100, endpoint=True)
     # Collocation.set_nodes(nodes)
-    approximation = Collocation.solve(context, n, 1e-6)
+    approximation = Ritz.solve(context, n, 1e-6)
     plotter(
         nodes, solution_exact, approximation, save=False,
     )
-    
 
 
 if __name__ == "__main__":

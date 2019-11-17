@@ -8,6 +8,7 @@ import numpy as np
 from scipy import integrate
 
 # TODO speed up Ritz
+# TODO DRY principle
 
 
 class VariationalProective:
@@ -124,7 +125,12 @@ class Ritz(VariationalProective):
                 x
             )
 
-        return cls.__integration(lambda x: f_modified(x) * v(x, i), tolerance)
+        res = cls.__integration(lambda x: f_modified(x) * v(x, i), tolerance)
+        res += (
+            v(cls.integral.borders[1], i) * cls.context["mu_1"]()
+            - v(cls.integral.borders[0], i) * cls.context["mu_2"]()
+        )
+        return res
 
     @classmethod
     def __integration(
@@ -141,7 +147,7 @@ class Collocation(VariationalProective):
     @classmethod
     def solve(cls, context, n, tolerance=1e-3):
         cls.context = context
-        matrix, vector = cls.__build_system(context, n)
+        matrix, vector = cls.__build_system(n)
         coeficients = np.linalg.solve(matrix, vector)
 
         def approximation(x: float) -> float:
@@ -186,11 +192,60 @@ class Collocation(VariationalProective):
 class LeastSquares(VariationalProective):
     @classmethod
     def solve(cls, context: dict, n: int, tolerance: float = 1e-3):
-        raise NotImplementedError("Least Squares")
+        cls.context = context
+        cls.constants = context["constants"]
+        cls.integral.borders = context["borders"]
+        matrix, vector = cls.__build_system(n, tolerance)
+        coeficients = np.linalg.solve(matrix, vector)
+
+        def approximation(x: float) -> float:
+            return lambdify(
+                cls.context["variable"],
+                cls.fsys.get_basic_zero()
+                + sum([coeficients[i] * cls.fsys.get_function(i) for i in range(n)]),
+                "numpy",
+            )(x)
+
+        return approximation
 
     @classmethod
     def __build_system(cls, n, tolerance=1e-3):
-        pass
+        L_operator = cls.context["L"]
+        variable = cls.context["variable"]
+
+        def f_modified():
+            return L_operator(
+                cls.context["solution_exact_expr"], variable
+            ) - L_operator(cls.fsys.get_basic_zero(), variable)
+
+        def G_func(i: int, j: int):
+            g = lambdify(
+                variable,
+                L_operator(cls.fsys.get_function(i), variable)
+                * L_operator(cls.fsys.get_function(j), variable),
+                "numpy",
+            )
+            return cls.__integration(g, tolerance)
+
+        def L_func(j: int):
+            l = lambdify(
+                variable,
+                f_modified() * L_operator(cls.fsys.get_function(j), variable),
+                "numpy",
+            )
+            return cls.__integration(l, tolerance)
+
+        matrix = np.matrix([[G_func(i, j) for i in range(n)] for j in range(n)])
+        vector = np.array([L_func(j) for j in range(n)])
+        return matrix, vector
+
+    @classmethod
+    def __integration(
+        cls, f: Callable[[float], float], tolerance: float = 1e-3
+    ) -> float:
+        cls.integral.integrand = f
+        # return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
 
 
 class BubnovGalerkin(VariationalProective):

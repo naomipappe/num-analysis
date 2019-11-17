@@ -9,7 +9,7 @@ from sympy.parsing.sympy_parser import (
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction
 from sympy import lambdify
-from methods.methods import Ritz, Collocation, BubnovGalerkin
+from methods.methods import Ritz, Collocation, BubnovGalerkin, LeastSquares
 from integral.integration_formulas import (
     SimpsonsRule,
     MeanRectangleFormula,
@@ -123,13 +123,13 @@ def main():
     }
     constants["alpha"] = -k(a)
     constants["gamma"] = k(b)
-    n = 2
+    n = 7
     tst = BasisFunction(context)
-    BubnovGalerkin.set_functional_system(tst)
-    BubnovGalerkin.set_integration_method(SimpsonsRule, RungeStrategy)
+    Ritz.set_functional_system(tst)
+    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
     nodes = linspace(a, b, 100, endpoint=True)
     # Collocation.set_nodes(nodes)
-    approximation = BubnovGalerkin.solve(context, n, 1e-6)
+    approximation = Ritz.solve(context, n, 1e-6)
     plotter(
         nodes, solution_exact, approximation, save=False,
     )
