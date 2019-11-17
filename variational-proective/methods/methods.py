@@ -12,11 +12,11 @@ from scipy import integrate
 
 
 class VariationalProective:
-    formula: Type[QuadraticFormula]
-    strategy: Type[IntegrationStrategy]
-    context: dict
-    constants: dict
-    fsys: Type[FunctionalSystem]
+    formula: Type[QuadraticFormula] = None
+    strategy: Type[IntegrationStrategy] = None
+    context: dict = None
+    constants: dict = None
+    fsys: Type[FunctionalSystem] = None
     integral = Integral()
 
     @classmethod
@@ -48,8 +48,6 @@ class Ritz(VariationalProective):
         matrix, vector = cls.__build_system(n, tolerance)
         coeficients = np.linalg.solve(matrix, vector)
         error = vector - np.dot(matrix, coeficients)
-        print(np.linalg.norm(error))
-        print(coeficients)
 
         def approximation(x: float) -> float:
             return lambdify(  # TODO DRY principle
@@ -59,85 +57,52 @@ class Ritz(VariationalProective):
                 "numpy",
             )(x)
 
-        return approximation
+        return approximation, error
 
     @classmethod
     def __build_system(cls, n: int, tolerance):
-        matrix = np.matrix(
-            [[cls.G_func(i, j, tolerance) for i in range(n)] for j in range(n)]
-        )
-        vector = np.array([cls.L_func(i, tolerance) for i in range(n)])
-        return matrix, vector
-
-    @classmethod
-    def G_func(cls, i: int, j: int, tolerance: float) -> float:
-        k = cls.context["k(x)"]
-        q = cls.context["q(x)"]
+        L_operator = cls.context["L"]
         variable = cls.context["variable"]
 
-        def g(x: float) -> float:
-            return k(x) * lambdify(
-                variable,
-                cls.fsys.get_derrivative(i, 1) * cls.fsys.get_derrivative(j, 1),
-                "numpy",
-            )(x)
-            +q(x) * lambdify(
-                variable, cls.fsys.get_function(i) * cls.fsys.get_function(j), "numpy",
-            )(x)
+        def f_modified():
+            return L_operator(
+                cls.context["solution_exact_expr"], variable
+            ) - L_operator(cls.fsys.get_basic_zero(), variable)
 
-        res = cls.__integration(g, tolerance)
-        res += (
-            cls.constants["beta"]
-            * lambdify(cls.context["variable"], cls.fsys.get_function(i), "numpy")(
-                cls.context["borders"][0]
-            )
-            * lambdify(cls.context["variable"], cls.fsys.get_function(j), "numpy")(
-                cls.context["borders"][0]
-            )
+        matrix = np.matrix(
+            [
+                [
+                    cls.__integration(
+                        lambdify(
+                            variable,
+                            L_operator(cls.fsys.get_function(i), variable)
+                            * cls.fsys.get_function(j),
+                            "numpy",
+                        ),
+                        tolerance,
+                    )
+                    for i in range(n)
+                ]
+                for j in range(n)
+            ]
         )
-        res += (
-            cls.constants["gamma"]
-            * lambdify(cls.context["variable"], cls.fsys.get_function(i), "numpy")(
-                cls.context["borders"][1]
-            )
-            * lambdify(cls.context["variable"], cls.fsys.get_function(j), "numpy")(
-                cls.context["borders"][1]
-            )
+        vector = np.array(
+            [
+                cls.__integration(
+                    lambdify(variable, f_modified() * cls.fsys.get_function(i), "numpy")
+                )
+                for i in range(n)
+            ]
         )
-        return res
-
-    @classmethod
-    def L_func(cls, i: int, tolerance: float) -> float:
-        def f_modified(x: float) -> float:
-            return lambdify(
-                cls.context["variable"],
-                cls.context["L"](
-                    cls.context["solution_exact_expr"], cls.context["variable"]
-                ).simplify()
-                - cls.context["L"](
-                    cls.fsys.get_basic_zero(), cls.context["variable"]
-                ).simplify(),
-                "numpy",
-            )(x)
-
-        def v(x: float, i: int) -> float:
-            return lambdify(cls.context["variable"], cls.fsys.get_function(i), "numpy")(
-                x
-            )
-
-        res = cls.__integration(lambda x: f_modified(x) * v(x, i), tolerance)
-        res += (
-            v(cls.integral.borders[1], i) * cls.context["mu_1"]()
-            - v(cls.integral.borders[0], i) * cls.context["mu_2"]()
-        )
-        return res
+        return matrix, vector
 
     @classmethod
     def __integration(
         cls, f: Callable[[float], float], tolerance: float = 1e-3
     ) -> float:
         cls.integral.integrand = f
-        # return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        if cls.strategy is not None and cls.formula is not None:
+            return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
         return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
 
 
@@ -149,6 +114,7 @@ class Collocation(VariationalProective):
         cls.context = context
         matrix, vector = cls.__build_system(n)
         coeficients = np.linalg.solve(matrix, vector)
+        error = vector - np.dot(matrix, coeficients)
 
         def approximation(x: float) -> float:
             return lambdify(
@@ -158,7 +124,7 @@ class Collocation(VariationalProective):
                 "numpy",
             )(x)
 
-        return approximation
+        return approximation, error
 
     @classmethod
     def __build_system(cls, n: int):
@@ -197,6 +163,7 @@ class LeastSquares(VariationalProective):
         cls.integral.borders = context["borders"]
         matrix, vector = cls.__build_system(n, tolerance)
         coeficients = np.linalg.solve(matrix, vector)
+        error = vector - np.dot(matrix, coeficients)
 
         def approximation(x: float) -> float:
             return lambdify(
@@ -206,7 +173,7 @@ class LeastSquares(VariationalProective):
                 "numpy",
             )(x)
 
-        return approximation
+        return approximation, error
 
     @classmethod
     def __build_system(cls, n, tolerance=1e-3):
@@ -244,7 +211,8 @@ class LeastSquares(VariationalProective):
         cls, f: Callable[[float], float], tolerance: float = 1e-3
     ) -> float:
         cls.integral.integrand = f
-        # return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        if cls.strategy is not None and cls.formula is not None:
+            return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
         return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
 
 
@@ -256,6 +224,7 @@ class BubnovGalerkin(VariationalProective):
         cls.integral.borders = context["borders"]
         matrix, vector = cls.__build_system(n, tolerance)
         coeficients = np.linalg.solve(matrix, vector)
+        error = vector - np.dot(matrix, coeficients)
 
         def approximation(x: float) -> float:
             return lambdify(
@@ -265,7 +234,7 @@ class BubnovGalerkin(VariationalProective):
                 "numpy",
             )(x)
 
-        return approximation
+        return approximation, error
 
     @classmethod
     def __build_system(cls, n, tolerance=1e-3):
@@ -299,6 +268,7 @@ class BubnovGalerkin(VariationalProective):
         cls, f: Callable[[float], float], tolerance: float = 1e-3
     ) -> float:
         cls.integral.integrand = f
-        # return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
+        if cls.strategy is not None and cls.formula is not None:
+            return cls.integral.integrate(tolerance, cls.strategy, cls.formula)
         return integrate.quad(cls.integral.integrand, *cls.integral.borders)[0]
 

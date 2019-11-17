@@ -83,7 +83,7 @@ class BasisFunction(FunctionalSystem):
         return self.get_function(k).diff(self.__x, order)
 
 
-class TestFunction(FunctionalSystem):
+class AlternativeBasis(FunctionalSystem):
     def __init__(self, context):
         super().__init__(context)
         self.__constants = context["constants"]

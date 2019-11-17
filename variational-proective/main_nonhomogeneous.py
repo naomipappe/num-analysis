@@ -1,4 +1,5 @@
 from numpy import sin, cos, pi, linspace
+from numpy.linalg import norm
 from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
     parse_expr,
@@ -123,16 +124,27 @@ def main():
     }
     constants["alpha"] = -k(a)
     constants["gamma"] = k(b)
-    n = 7
-    tst = BasisFunction(context)
-    Ritz.set_functional_system(tst)
-    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    n_Ritz = 15
+    n_Bubnov = 30
+    
+    functional_system = BasisFunction(context)
     nodes = linspace(a, b, 100, endpoint=True)
-    # Collocation.set_nodes(nodes)
-    approximation = Ritz.solve(context, n, 1e-6)
-    plotter(
-        nodes, solution_exact, approximation, save=False,
-    )
+    
+    Ritz.set_functional_system(functional_system)
+    #Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    approximation_Ritz, error_Ritz = Ritz.solve(context, n_Ritz, 1e-6)
+    
+    plotter(nodes, solution_exact, approximation_Ritz, save=False)
+    print("Вектор невязки(Метод Ритца):", error_Ritz)
+    print("Норма вектора невязки(Метод Ритца):", norm(error_Ritz))
+    
+    BubnovGalerkin.set_functional_system(functional_system)
+    #BubnovGalerkin.set_integration_method(SimpsonsRule, RungeStrategy)
+    approximation_Bubnov, error_Bubnov = BubnovGalerkin.solve(context, n_Bubnov, 1e-6)
+    
+    plotter(nodes, solution_exact, approximation_Bubnov, save=False)
+    print("Вектор невязки(Метод Бубнова - Галёркина):", error_Bubnov)
+    print("Норма вектора невязки(Метод Бубнова - Галёркина):", norm(error_Bubnov))
 
 
 if __name__ == "__main__":

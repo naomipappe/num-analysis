@@ -1,4 +1,5 @@
 from numpy import sin, cos, pi, linspace
+from numpy.linalg import norm
 from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
     parse_expr,
@@ -7,7 +8,7 @@ from sympy.parsing.sympy_parser import (
 )
 
 transformations = standard_transformations + (implicit_multiplication,)
-from functional.fun_sys import BasisFunction, TestFunction
+from functional.fun_sys import BasisFunction, AlternativeBasis
 from sympy import lambdify
 from methods.methods import Ritz, Collocation, LeastSquares, BubnovGalerkin
 from integral.integration_formulas import (
@@ -91,8 +92,8 @@ k_expresion_dx = k_expression.diff(variable)
 #     f'{constants["c1"]} * (x ** {constants["p1"]}) + {constants["c2"]}*(x**{constants["p2"]}) +\
 #          {constants["c3"]}',
 #     evaluate=True,
-# )
-p_expression = parse_expr("0", evaluate=True)
+# )  # comment out for Ritz
+p_expression = parse_expr("0", evaluate=True) #Uncomment for Ritz
 
 q_expression = parse_expr(
     f'{constants["d1"]} * (x ** {constants["q1"]}) + {constants["d2"]} * (x**{constants["q2"]}) +\
@@ -163,16 +164,28 @@ def main():
         "L": L_operator,
         "solution_exact_expr": solution_exact_expression,
     }
-    n = 10
-    function_system = TestFunction(context)
-    Ritz.set_functional_system(function_system)
-    Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    n_Ritz = 5
+    n_Bubnov = 10
+
+    functional_system = AlternativeBasis(context)
     nodes = linspace(a, b, 100, endpoint=True)
-    # Collocation.set_nodes(nodes)
-    approximation = Ritz.solve(context, n, 1e-6)
-    plotter(
-        nodes, solution_exact, approximation, save=False,
-    )
+    
+    
+    Ritz.set_functional_system(functional_system)
+    #Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    approximation_Ritz, error_Ritz = Ritz.solve(context, n_Ritz, 1e-6)
+
+    plotter(nodes, solution_exact, approximation_Ritz, save=False)
+    print("Вектор невязки(Метод Ритца):", error_Ritz)
+    print("Норма вектора невязки(Метод Ритца):", norm(error_Ritz))
+    
+    # BubnovGalerkin.set_functional_system(functional_system)
+    # #BubnovGalerkin.set_integration_method(SimpsonsRule, AdaptiveStrategy)
+    # approximation_Bubnov, error_Bubnov = BubnovGalerkin.solve(context, n_Bubnov, 1e-6)
+
+    # plotter(nodes, solution_exact, approximation_Bubnov, save=False)
+    # print("Вектор невязки(Метод Бубнова - Галёркина):", error_Bubnov)
+    # print("Норма вектора невязки(Метод Бубнова - Галёркина):", norm(error_Bubnov))
 
 
 if __name__ == "__main__":
