@@ -8,7 +8,7 @@ from sympy.parsing.sympy_parser import (
 )
 
 transformations = standard_transformations + (implicit_multiplication,)
-from functional.fun_sys import BasisFunction, AlternativeBasis
+from functional.fun_sys import BasisFunction, AlternativeBasis, AnotherSystem
 from sympy import lambdify
 from methods.methods import Ritz, Collocation, LeastSquares, BubnovGalerkin
 from integral.integration_formulas import (
@@ -22,6 +22,7 @@ from integral.integration_strategy import (
     AprioriEstimationStrategy,
 )
 from utilities.util import plotter
+from scipy import integrate
 
 variable = symbols("x")
 a, b = 2, 5
@@ -88,12 +89,12 @@ k_expression = parse_expr(
 )
 k_expresion_dx = k_expression.diff(variable)
 
-# p_expression = parse_expr(
-#     f'{constants["c1"]} * (x ** {constants["p1"]}) + {constants["c2"]}*(x**{constants["p2"]}) +\
-#          {constants["c3"]}',
-#     evaluate=True,
-# )  # comment out for Ritz
-p_expression = parse_expr("0", evaluate=True) #Uncomment for Ritz
+p_expression = parse_expr(
+    f'{constants["c1"]} * (x ** {constants["p1"]}) + {constants["c2"]}*(x**{constants["p2"]}) +\
+         {constants["c3"]}',
+    evaluate=True,
+)  # comment out for Ritz
+# p_expression = parse_expr("0", evaluate=True)  # Uncomment for Ritz
 
 q_expression = parse_expr(
     f'{constants["d1"]} * (x ** {constants["q1"]}) + {constants["d2"]} * (x**{constants["q2"]}) +\
@@ -144,8 +145,8 @@ def mu_2() -> float:
 
 def L_operator(u, variable):
     return (
-        -(k_expression * (u.diff(variable))).diff(variable)
-        + p_expression * (u.diff(variable))
+        u.diff(variable) * (-k_expression + p_expression)
+        - k_expression * u.diff(variable, 2)
         + q_expression * u
     )
 
@@ -165,27 +166,27 @@ def main():
         "solution_exact_expr": solution_exact_expression,
     }
     n_Ritz = 5
-    n_Bubnov = 10
+    n_Bubnov = 5
 
     functional_system = AlternativeBasis(context)
-    nodes = linspace(a, b, 100, endpoint=True)
-    
-    
-    Ritz.set_functional_system(functional_system)
-    #Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
-    approximation_Ritz, error_Ritz = Ritz.solve(context, n_Ritz, 1e-6)
+    nodes = linspace(a, b, 50, endpoint=True)
 
-    plotter(nodes, solution_exact, approximation_Ritz, save=False)
-    print("Вектор невязки(Метод Ритца):", error_Ritz)
-    print("Норма вектора невязки(Метод Ритца):", norm(error_Ritz))
-    
-    # BubnovGalerkin.set_functional_system(functional_system)
-    # #BubnovGalerkin.set_integration_method(SimpsonsRule, AdaptiveStrategy)
-    # approximation_Bubnov, error_Bubnov = BubnovGalerkin.solve(context, n_Bubnov, 1e-6)
+    # Ritz.set_functional_system(functional_system)
+    # Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
+    # approximation_Ritz, error_Ritz = Ritz.solve(context, n_Ritz, 1e-6)
 
-    # plotter(nodes, solution_exact, approximation_Bubnov, save=False)
-    # print("Вектор невязки(Метод Бубнова - Галёркина):", error_Bubnov)
-    # print("Норма вектора невязки(Метод Бубнова - Галёркина):", norm(error_Bubnov))
+    # plotter(
+    #     nodes, solution_exact, approximation_Ritz, save=True, name=f"ritz_{n_Ritz}"
+    # )
+    # print("Вектор невязки(Метод Ритца):", error_Ritz)
+    # print("Норма вектора невязки(Метод Ритца):", norm(error_Ritz))
+    BubnovGalerkin.set_functional_system(functional_system)
+    BubnovGalerkin.set_integration_method(SimpsonsRule, RungeStrategy)
+    approximation_Bubnov, error_Bubnov = BubnovGalerkin.solve(context, n_Bubnov, 1e-6)
+
+    plotter(nodes, solution_exact, approximation_Bubnov, save=True,name=f'bubnov_{n_Bubnov}')
+    print("Вектор невязки(Метод Бубнова - Галёркина):", error_Bubnov)
+    print("Норма вектора невязки(Метод Бубнова - Галёркина):", norm(error_Bubnov))
 
 
 if __name__ == "__main__":

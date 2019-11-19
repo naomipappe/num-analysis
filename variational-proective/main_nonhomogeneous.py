@@ -8,7 +8,7 @@ from sympy.parsing.sympy_parser import (
 )
 
 transformations = standard_transformations + (implicit_multiplication,)
-from functional.fun_sys import BasisFunction
+from functional.fun_sys import BasisFunction, AnotherSystem, AlternativeBasis
 from sympy import lambdify
 from methods.methods import Ritz, Collocation, BubnovGalerkin, LeastSquares
 from integral.integration_formulas import (
@@ -22,6 +22,7 @@ from integral.integration_strategy import (
     AprioriEstimationStrategy,
 )
 from utilities.util import plotter
+from scipy import integrate
 
 variable = symbols("x")
 
@@ -102,11 +103,10 @@ def mu_2() -> float:
 
 def L_operator(u, variable):
     return (
-        -(k_expression * (u.diff(variable))).diff(variable)
-        + p_expression * (u.diff(variable))
+        u.diff(variable) * (-k_expression + p_expression)
+        - k_expression * u.diff(variable, 2)
         + q_expression * u
     )
-
 
 def main():
     context = {
@@ -124,11 +124,11 @@ def main():
     }
     constants["alpha"] = -k(a)
     constants["gamma"] = k(b)
-    n_Ritz = 15
-    n_Bubnov = 30
+    n_Ritz = 10
+    n_Bubnov = 10
     
-    functional_system = BasisFunction(context)
-    nodes = linspace(a, b, 100, endpoint=True)
+    functional_system = AnotherSystem(context)
+    nodes = linspace(a, b, 50, endpoint=True)
     
     Ritz.set_functional_system(functional_system)
     #Ritz.set_integration_method(SimpsonsRule, RungeStrategy)
@@ -137,6 +137,8 @@ def main():
     plotter(nodes, solution_exact, approximation_Ritz, save=False)
     print("Вектор невязки(Метод Ритца):", error_Ritz)
     print("Норма вектора невязки(Метод Ритца):", norm(error_Ritz))
+    delta = integrate.quad(lambda x: (solution_exact(x) - approximation_Ritz(x))**2, a, b)[0] / (b - a)
+    print(delta)
     
     BubnovGalerkin.set_functional_system(functional_system)
     #BubnovGalerkin.set_integration_method(SimpsonsRule, RungeStrategy)
@@ -145,7 +147,8 @@ def main():
     plotter(nodes, solution_exact, approximation_Bubnov, save=False)
     print("Вектор невязки(Метод Бубнова - Галёркина):", error_Bubnov)
     print("Норма вектора невязки(Метод Бубнова - Галёркина):", norm(error_Bubnov))
-
+    delta = integrate.quad(lambda x: (solution_exact(x) - approximation_Bubnov(x))**2, a, b)[0] / (b - a)
+    print(delta)
 
 if __name__ == "__main__":
     main()

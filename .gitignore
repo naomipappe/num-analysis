@@ -19,3 +19,7 @@ approximations/__pycache__/
 
 
 *.txt
+
+*.pyc
+
+eigenvalues-problem/eigentvalues/__init__.
