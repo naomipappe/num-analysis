@@ -6,37 +6,38 @@ from sympy.parsing.sympy_parser import (
     standard_transformations,
     implicit_multiplication,
 )
-from scheme.diff_scheme import DiffScheme
+from scheme.diff_scheme import FiniteElementDiffScheme, IntegroInterpolationScheme
 from matplotlib import pyplot as plt
 from typing import Callable
 from numpy import linspace
+from collections.abc import Iterable
 transformations = standard_transformations + (implicit_multiplication,)
-
+# region constants and conditions
 variable = symbols("x")
-a, b = 2, 5
+a, b = 1, 3
 constants = {
     "b1": 1,
-    "b2": 2,
-    "b3": 1,
-    "k1": 6,
-    "k2": 3,
-    "c1": 1,
-    "c2": 2,
+    "b2": 0,
+    "b3": 0,
+    "k1": 0,
+    "k2": 1,
+    "c1": 2,
+    "c2": 0,
     "c3": 1,
     "p1": 2,
-    "p2": 1,
+    "p2": 0,
     "d1": 1,
-    "d2": 1,
-    "d3": 1,
-    "q1": 1,
-    "q2": 0,
-    "a1": 6,
-    "a2": 3,
+    "d2": 2,
+    "d3": 2,
+    "q1": 0,
+    "q2": 1,
+    "a1": 3,
+    "a2": 1,
     "a3": 1,
     "a4": 1,
-    "n1": 2,
+    "n1": 1,
     "n2": 1,
-    "n3": 4,
+    "n3": 2,
 }
 constants["alpha"] = (
     (constants["a1"] * (a ** (constants["n1"])))
@@ -135,18 +136,22 @@ def L_operator(u, variable):
         (-k_expression*u.diff(variable)).diff(variable) +
         q_expression*solution_exact_expression
     )
+# endregion
 
 
 def plotter(
     x: list,
     precise_solution: Callable[[float], float],
-    approximation: Callable[[float], float],
+    approximation: Callable[[float], float] or list,
     save: bool = False,
     name: str = "result",
 ):
     plt.clf()
     plt.plot(x, precise_solution(x), "r")
-    approx = [approximation(node) for node in x]
+    if isinstance(approximation, Iterable):
+        approx = approximation
+    else:
+        approx = [approximation(node) for node in x]
     plt.plot(x, approx, "b")
     plt.fill_between(
         x, precise_solution(x), approx, color="yellow", alpha="0.5"
@@ -171,23 +176,27 @@ def main():
         "L": L_operator,
         "solution_exact_expr": solution_exact_expression,
     }
-    n = 50
-    scheme = DiffScheme(context)
-    approximation, nodes = scheme.solve(n)
-    space = linspace(a, b, n)
+    n = 10
+    nodes, step = linspace(a, b, n, retstep=True)
+    scheme = IntegroInterpolationScheme(context)
+    approximation = scheme.solve(nodes, step)
+
     print("-------------------------------------------")
     print("x_i  | Справжній  | Наближений | Відхилення")
     print("-------------------------------------------")
+    
     outfile = open('result.csv', 'w+')
-    for node in nodes:
-        print(f"{node:.2f} | {solution_exact(node):10.7f} | {approximation(node):10.7f} | {solution_exact(node) - approximation(node):10.7f}")
+    outfile.write('Node,Exact Solution,Approximation,Error\n')
+    for i in range(len(nodes)):
+        print(f"{nodes[i]:.2f} | {solution_exact(nodes[i]):10.7f} | {approximation[i]:10.7f} | {abs(solution_exact(nodes[i]) - approximation[i]):10.7f}")
         outfile.write(
-            f"{node:.2f},{solution_exact(node):10.7f},{approximation(node):10.7f},{solution_exact(node) - approximation(node):10.7f}\n")
+            f"{nodes[i]:.2f},{solution_exact(nodes[i]):10.7f},{approximation[i]:10.7f},{abs(solution_exact(nodes[i]) - approximation[i]):10.7f}\n")
     outfile.close()
+    
     print("------------------------------------------")
 
-    plotter(space, solution_exact, approximation,
-            save=False, name=f'result_{n}')
+    plotter(nodes, solution_exact, approximation,
+            save=True, name=f'result_{n}')
 
 
 main()
