@@ -1,2 +1,1 @@
-# num-analysis
-Practical assignments on numerical analysis university course
+Numerical analysis and it's applications to mathematical physics practical assignments
