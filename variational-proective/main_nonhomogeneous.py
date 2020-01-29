@@ -1,4 +1,4 @@
-from numpy import sin, cos, pi, linspace
+from numpy import linspace
 from numpy.linalg import norm
 from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
@@ -10,17 +10,7 @@ from sympy.parsing.sympy_parser import (
 transformations = standard_transformations + (implicit_multiplication,)
 from functional.fun_sys import BasisFunction, AnotherSystem, AlternativeBasis
 from sympy import lambdify
-from methods.methods import Ritz, Collocation, BubnovGalerkin, LeastSquares
-from integral.integration_formulas import (
-    SimpsonsRule,
-    MeanRectangleFormula,
-    TrapezoidalFormula,
-)
-from integral.integration_strategy import (
-    RungeStrategy,
-    AdaptiveStrategy,
-    AprioriEstimationStrategy,
-)
+from methods.methods import Ritz, BubnovGalerkin
 from utilities.util import plotter
 from scipy import integrate
 
@@ -86,11 +76,11 @@ def dk(x: float) -> float:
 
 
 def p(x: float) -> float:
-    return lambdify(variable, p_expression, "numpy")
+    return lambdify(variable, p_expression, "numpy")(x)
 
 
 def q(x: float) -> float:
-    return lambdify(variable, q_expression, "numpy")
+    return lambdify(variable, q_expression, "numpy")(x)
 
 
 def mu_1() -> float:
@@ -102,11 +92,7 @@ def mu_2() -> float:
 
 
 def L_operator(u, variable):
-    return (
-        u.diff(variable) * (-k_expression + p_expression)
-        - k_expression * u.diff(variable, 2)
-        + q_expression * u
-    )
+    return (-k_expression * u.diff(variable)).diff(variable) + p_expression * u.diff(variable) + q_expression * u
 
 def main():
     context = {
@@ -124,9 +110,9 @@ def main():
     }
     constants["alpha"] = -k(a)
     constants["gamma"] = k(b)
-    n_Ritz = 10
+    n_Ritz = 20
     n_Bubnov = 10
-    
+
     functional_system = AnotherSystem(context)
     nodes = linspace(a, b, 50, endpoint=True)
     
