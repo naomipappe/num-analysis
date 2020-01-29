@@ -77,7 +77,7 @@ class BasisFunction(FunctionalSystem):
         elif k == 1:
             return ((self.__b - self.__x) ** 2) * (self.__x - self.__D)
         else:
-            return ((self.__x - self.__a) ** (k - 1)) * ((self.__b - self.__x) ** 2)
+            return ((self.__x - self.__a) ** (k)) * ((self.__b - self.__x) ** 2)
 
     def get_derrivative(self, k, order):
         return self.get_function(k).diff(self.__x, order)
