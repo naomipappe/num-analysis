@@ -1,4 +1,7 @@
-from scipy import integrate
+from typing import Callable, Iterable
+
+from matplotlib import pyplot as plt
+from numpy import linspace
 from sympy import lambdify
 from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
@@ -6,89 +9,29 @@ from sympy.parsing.sympy_parser import (
     standard_transformations,
     implicit_multiplication,
 )
-from scheme.diff_scheme import FiniteElementDiffScheme, IntegroInterpolationScheme
-from matplotlib import pyplot as plt
-from typing import Callable
-from numpy import linspace
-from collections.abc import Iterable
+
+from scheme.diff_scheme import IntegroInterpolationScheme
+
 transformations = standard_transformations + (implicit_multiplication,)
-# region constants and conditions
+# region Assignment-specific constants
 variable = symbols("x")
-a, b = 1, 3
-constants = {
-    "b1": 1,
-    "b2": 0,
-    "b3": 0,
-    "k1": 0,
-    "k2": 1,
-    "c1": 2,
-    "c2": 0,
-    "c3": 1,
-    "p1": 2,
-    "p2": 0,
-    "d1": 1,
-    "d2": 2,
-    "d3": 2,
-    "q1": 0,
-    "q2": 1,
-    "a1": 3,
-    "a2": 1,
-    "a3": 1,
-    "a4": 1,
-    "n1": 1,
-    "n2": 1,
-    "n3": 2,
-}
-constants["alpha"] = (
-    (constants["a1"] * (a ** (constants["n1"])))
-    + (constants["a2"] * (a ** (constants["n2"])))
-    + (constants["a3"] * (a ** (constants["n3"])))
-    + constants["a4"]
-)
-constants["beta"] = (
-    (constants["a1"] * constants["n1"] * (a ** (constants["n1"] - 1)))
-    + (constants["a2"] * constants["n2"] * (a ** (constants["n2"] - 1)))
-    + (constants["a3"] * constants["n3"] * (a ** (constants["n3"] - 1)))
-)
-constants["gamma"] = (
-    (constants["a1"] * (b ** (constants["n1"])))
-    + (constants["a2"] * (b ** (constants["n2"])))
-    + (constants["a3"] * (b ** (constants["n3"])))
-    + constants["a4"]
-)
-
-constants["delta"] = -(
-    (constants["a1"] * constants["n1"] * (b ** (constants["n1"] - 1)))
-    + (constants["a2"] * constants["n2"] * (b ** (constants["n2"] - 1)))
-    + (constants["a3"] * constants["n3"] * (b ** (constants["n3"] - 1)))
-)
-
-solution_exact_expression = parse_expr(
-    f'({constants["a1"]}*x**({constants["n1"]}))+({constants["a2"]}*x**({constants["n2"]})) +\
-         ({constants["a3"]}*x**({constants["n3"]}))+{constants["a4"]}',
-    evaluate=True)
+BORDER_LEFT, BORDER_RIGHT = 1, 3
+m1, m2, m3 = 1, 2, 1
+p1, p2, p3 = 2, 1, 2
+q1, q2, q3 = 1, 1, 1
+k1, k2, k3 = 1, 1, 1
+beta = -6
+delta = 3
+# endregion
+# region Assignment-specific functions
+solution_exact_expression = parse_expr(f'{m1}*sin({m2}*x)+{m3}', evaluate=True)
 solution_exact_expression_dx = solution_exact_expression.diff(variable)
-solution_exact_expression_d2x = solution_exact_expression.diff(variable, 2)
 
-k_expression = parse_expr(
-    f'{constants["b1"]}*(x**{constants["k1"]})+{constants["b2"]}*(x**{constants["k2"]}) +\
-         {constants["b3"]}',
-    evaluate=True,
-)
-k_expresion_dx = k_expression.diff(variable)
+k_expression = parse_expr(f'{k1}*(x**{k2})+{k3}', evaluate=True)
 
-# p_expression = parse_expr(
-#     f'{constants["c1"]} * (x ** {constants["p1"]}) + {constants["c2"]}*(x**{constants["p2"]}) +\
-#          {constants["c3"]}',
-#     evaluate=True,
-# )  # comment out for Ritz
-p_expression = parse_expr("0", evaluate=True)  # Uncomment for Ritz
-
-q_expression = parse_expr(
-    f'{constants["d1"]} * (x ** {constants["q1"]}) + {constants["d2"]} * (x**{constants["q2"]}) +\
-         {constants["d3"]}',
-    evaluate=True,
-)
+p_expression = parse_expr(f'{p1} * (x ** {p2}) + {p3}', evaluate=True)
+# p_expression = parse_expr('0', evaluate=True)
+q_expression = parse_expr(f'{q1} * (x ** {q2}) + {q3}', evaluate=True)
 
 
 def solution_exact(x: float) -> float:
@@ -96,19 +39,11 @@ def solution_exact(x: float) -> float:
 
 
 def solution_exact_dx(x: float) -> float:
-    return lambdify(variable, solution_exact_expression_dx, "numpy")(x)
-
-
-def solution_exact_d2x(x: float) -> float:
-    return lambdify(variable, solution_exact_expression_d2x, "numpy")(x)
+    return lambdify(variable, solution_exact_expression_dx, 'numpy')(x)
 
 
 def k(x: float) -> float:
     return lambdify(variable, k_expression, "numpy")(x)
-
-
-def dk(x: float) -> float:
-    return lambdify(variable, k_expresion_dx, "numpy")(x)
 
 
 def p(x: float) -> float:
@@ -120,32 +55,23 @@ def q(x: float) -> float:
 
 
 def mu_1() -> float:
-    return constants["alpha"] * solution_exact_dx(a) - constants[
-        "beta"
-    ] * solution_exact(a)
+    return -k(BORDER_LEFT) * solution_exact_dx(BORDER_LEFT) + beta * solution_exact(BORDER_LEFT)
 
 
 def mu_2() -> float:
-    return constants["gamma"] * solution_exact_dx(b) + constants[
-        "delta"
-    ] * solution_exact(b)
+    return k(BORDER_RIGHT) * solution_exact_dx(BORDER_RIGHT) + delta * solution_exact(BORDER_RIGHT)
 
 
-def L_operator(u, variable):
-    return (
-        (-k_expression*u.diff(variable)).diff(variable) +
-        q_expression*solution_exact_expression
-    )
+def differential_operator(u):
+    return (-k_expression * u.diff(variable)).diff(variable) + p_expression * u.diff(variable) + \
+           q_expression * u
+
+
 # endregion
 
 
-def plotter(
-    x: list,
-    precise_solution: Callable[[float], float],
-    approximation: Callable[[float], float] or list,
-    save: bool = False,
-    name: str = "result",
-):
+def plotter(x: list, precise_solution: Callable[[float], float], approximation: Callable[[float], float] or list,
+            save: bool = False, name: str = "result"):
     plt.clf()
     plt.plot(x, precise_solution(x), "r")
     if isinstance(approximation, Iterable):
@@ -153,9 +79,7 @@ def plotter(
     else:
         approx = [approximation(node) for node in x]
     plt.plot(x, approx, "b")
-    plt.fill_between(
-        x, precise_solution(x), approx, color="yellow", alpha="0.5"
-    )
+    plt.fill_between(x, precise_solution(x), approx, color="yellow", alpha="0.5")
     if save:
         plt.savefig(f"{name}.png")
     else:
@@ -163,34 +87,26 @@ def plotter(
 
 
 def main():
-    context = {
-        "variable": variable,
-        "borders": (a, b),
-        "constants": constants,
-        "k(x)": k,
-        "dk/dx": dk,
-        "p(x)": p,
-        "q(x)": q,
-        "mu_1": mu_1,
-        "mu_2": mu_2,
-        "L": L_operator,
-        "solution_exact_expr": solution_exact_expression,
-    }
-    n = 10
-    nodes, step = linspace(a, b, n, retstep=True)
-    scheme = IntegroInterpolationScheme(context)
-    approximation = scheme.solve(nodes, step)
+    alpha = -k(BORDER_LEFT)
+    gamma = k(BORDER_RIGHT)
+    n = 50
+    nodes = linspace(BORDER_LEFT, BORDER_RIGHT, n)
+    scheme = IntegroInterpolationScheme((BORDER_LEFT, BORDER_RIGHT), alpha, beta, gamma, delta, mu_1, mu_2, k, p, q)
+    approximation = scheme.solve(n, differential_operator(solution_exact_expression))
 
     print("-------------------------------------------")
     print("x_i  | Справжній  | Наближений | Відхилення")
     print("-------------------------------------------")
-    
-    outfile = open('result.csv', 'w+')
+
+    outfile = open(f'result_{n}.csv', 'w+')
     outfile.write('Node,Exact Solution,Approximation,Error\n')
     for i in range(len(nodes)):
-        print(f"{nodes[i]:.2f} | {solution_exact(nodes[i]):10.7f} | {approximation[i]:10.7f} | {abs(solution_exact(nodes[i]) - approximation[i]):10.7f}")
+        print(
+            f"{nodes[i]:.2f} | {solution_exact(nodes[i]):10.7f} | {approximation[i]:10.7f} "
+            f"| {abs(solution_exact(nodes[i]) - approximation[i]):10.7f}")
         outfile.write(
-            f"{nodes[i]:.2f},{solution_exact(nodes[i]):10.7f},{approximation[i]:10.7f},{abs(solution_exact(nodes[i]) - approximation[i]):10.7f}\n")
+            f"{nodes[i]:.2f},{solution_exact(nodes[i]):10.7f},{approximation[i]:10.7f},"
+            f"{abs(solution_exact(nodes[i]) - approximation[i]):10.7f}\n")
     outfile.close()
     
     print("------------------------------------------")
