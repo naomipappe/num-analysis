@@ -1,5 +1,5 @@
 from typing import Callable, Iterable
-
+from scheme.diff_scheme import MonotonicScheme, IntegroInterpolationScheme
 from matplotlib import pyplot as plt
 from numpy import linspace
 from sympy import lambdify
@@ -10,9 +10,8 @@ from sympy.parsing.sympy_parser import (
     implicit_multiplication,
 )
 
-from scheme.diff_scheme import IntegroInterpolationScheme
-
 transformations = standard_transformations + (implicit_multiplication,)
+
 # region Assignment-specific constants
 variable = symbols("x")
 BORDER_LEFT, BORDER_RIGHT = 1, 3
@@ -91,7 +90,7 @@ def main():
     gamma = k(BORDER_RIGHT)
     n = 50
     nodes = linspace(BORDER_LEFT, BORDER_RIGHT, n)
-    scheme = IntegroInterpolationScheme((BORDER_LEFT, BORDER_RIGHT), alpha, beta, gamma, delta, mu_1, mu_2, k, p, q)
+    scheme = MonotonicScheme((BORDER_LEFT, BORDER_RIGHT), alpha, beta, gamma, delta, mu_1, mu_2, k, p, q)
     approximation = scheme.solve(n, differential_operator(solution_exact_expression))
 
     print("-------------------------------------------")
@@ -111,8 +110,7 @@ def main():
     
     print("------------------------------------------")
 
-    plotter(nodes, solution_exact, approximation,
-            save=True, name=f'result_{n}')
+    plotter(nodes, solution_exact, approximation, save=True, name=f'result_{n}')
 
 
 main()
