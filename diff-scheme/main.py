@@ -15,8 +15,8 @@ transformations = standard_transformations + (implicit_multiplication,)
 # region Assignment-specific constants
 variable = symbols("x")
 BORDER_LEFT, BORDER_RIGHT = 1, 3
-m1, m2, m3 = 1, 2, 1
-p1, p2, p3 = 2, 1, 2
+m1, m2, m3 = 1, 2, 0
+p1, p2, p3 = 2, 1, 0
 q1, q2, q3 = 1, 1, 1
 k1, k2, k3 = 1, 1, 1
 beta = -6
@@ -28,7 +28,7 @@ solution_exact_expression_dx = solution_exact_expression.diff(variable)
 
 k_expression = parse_expr(f'{k1}*(x**{k2})+{k3}', evaluate=True)
 
-p_expression = parse_expr(f'{p1} * (x ** {p2}) + {p3}', evaluate=True)
+p_expression = parse_expr(f'{p1} * (cos(x * {p2})) + {p3}', evaluate=True)
 # p_expression = parse_expr('0', evaluate=True)
 q_expression = parse_expr(f'{q1} * (x ** {q2}) + {q3}', evaluate=True)
 
@@ -86,6 +86,7 @@ def plotter(x: list, precise_solution: Callable[[float], float], approximation: 
 
 
 def main():
+    print(p_expression)
     alpha = -k(BORDER_LEFT)
     gamma = k(BORDER_RIGHT)
     n = 50

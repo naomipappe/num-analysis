@@ -177,7 +177,6 @@ class MonotonicScheme:
 
     def solve(self, n: int, equation_rhs):
         matrix, vector = self._build_system(n, equation_rhs)
-        matrix, vector = self._build_system(n, equation_rhs)
         results = np.linalg.solve(matrix, vector)
         print(vector - np.dot(matrix, results))
         return results
@@ -190,17 +189,24 @@ class MonotonicScheme:
         matrix = np.zeros((n, n))
         vector = np.zeros(n)
 
-        matrix[0][0] = self.a(1) / self._step + self._beta + self._step / 2 * self.d(0)  # - self.s(0) / self._step
-        matrix[0][1] = -self.a(1) / self._step  # + self.s(0) / self._step
+        def A(j: int) -> float:
+            return self.a(j) / (self._step ** 2) * (-self.xi(j) - self._step * self.b_neg(j))
+
+        def B(j: int) -> float:
+            return self.a(j + 1) / (self._step ** 2) * (-self.xi(j) + self._step * self.b_pos(j))
+
+        def C(j: int) -> float:
+            return -A(j) - B(j) + self.d(j)
+
+        matrix[0][0] = self.a(1) / self._step + self._beta + self._step / 2 * self._q(self._nodes[0])
+        matrix[0][1] = -self.a(1) / self._step
 
         matrix[n - 1][n - 2] = -self.a(n - 1) / self._step  # - self.s(n - 1) / self._step
-        matrix[n - 1][n - 1] = self._delta + self.a(n - 1) / self._step + self._step / 2 * self.d(n - 1)  # + self.s(
-        # n - 1) / self._step
+        matrix[n - 1][n - 1] = self._delta + self.a(n - 1) / self._step + self._step / 2 * self._q(self._nodes[n - 1])
         for i in range(1, n - 1):
-            matrix[i][i - 1] = -self.a(i) / (self._step ** 2) - self.b_neg(i) * self.a(i) / self._step
-            matrix[i][i] = (self.a(i + 1) + self.a(i)) / (self._step ** 2) - (
-                    self.b_pos(i) * self.a(i + 1) + self.b_neg(i) * self.a(i)) / self._step + self.d(i)
-            matrix[i][i + 1] = -self.a(i + 1) / (self._step ** 2) + self.b_pos(i) * self.a(i + 1) / self._step
+            matrix[i][i - 1] = A(i)
+            matrix[i][i] = C(i)
+            matrix[i][i + 1] = B(i)
 
         vector[0] = (self._step / 2) * self.phi(0, call_equation_rhs) + self._mu_1()
         vector[n - 1] = (self._step / 2) * self.phi(n - 1, call_equation_rhs) + self._mu_2()
@@ -241,3 +247,7 @@ class MonotonicScheme:
         else:
             return 1 / self._step * \
                    integrate.quad(equation_rhs, self._nodes[i] - self._step / 2, self._nodes[i] + self._step / 2)[0]
+
+    def xi(self, i: int):
+        R = self._step * abs(self._p(self._nodes[i])) / self._k(self._nodes[i]) / 2
+        return 1 / (1 + R)
