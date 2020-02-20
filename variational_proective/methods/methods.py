@@ -1,6 +1,6 @@
 from typing import Type, Tuple, Callable
 
-import numpy as np
+from numpy import array, dot, linalg, linspace
 from scipy import integrate
 from sympy import lambdify
 
@@ -36,8 +36,8 @@ class Ritz(VariationalProective):
     @classmethod
     def coefficients(cls, n, equation_rhs, differential_operator):
         matrix, vector = cls.__build_system(n, equation_rhs, differential_operator)
-        _coefficients = np.linalg.solve(matrix, vector)
-        error = vector - np.dot(matrix, _coefficients)
+        _coefficients = linalg.solve(matrix, vector)
+        error = vector - dot(matrix, _coefficients)
         return _coefficients, error
 
     @classmethod
@@ -46,20 +46,21 @@ class Ritz(VariationalProective):
             return equation_rhs - differential_operator(cls._functional_system.get_basic_zero())
 
         def matrix_element(i: int, j: int) -> float:
-            return integrate.quad(lambdify(cls._functional_system.variable, differential_operator(
-                cls._functional_system.get_function(i)) * cls._functional_system.get_function(j), "numpy", ),
-                                  *cls._functional_system.borders)[0]
+            return integrate.quad(
+                lambdify(cls._functional_system.variable, differential_operator(
+                    cls._functional_system.get_function(i)) * cls._functional_system.get_function(j), "numpy", ),
+                *cls._functional_system.borders)[0]
 
         def vector_element(i: int) -> float:
             return integrate.quad(
                 lambdify(cls._functional_system.variable, rhs_homogeneous() * cls._functional_system.get_function(i),
                          "numpy"), *cls._functional_system.borders)[0]
 
-        matrix = np.array(
+        matrix = array(
             [[matrix_element(i, j) for i in range(n)] for j in range(n)]
         )
 
-        vector = np.array([vector_element(i) for i in range(n)])
+        vector = array([vector_element(i) for i in range(n)])
 
         return matrix, vector
 
@@ -70,8 +71,8 @@ class Collocation(VariationalProective):
     @classmethod
     def coefficients(cls, n: int, equation_rhs, differential_operator):
         matrix, vector = cls.__build_system(n, equation_rhs, differential_operator)
-        _coefficients = np.linalg.solve(matrix, vector)
-        error = vector - np.dot(matrix, _coefficients)
+        _coefficients = linalg.solve(matrix, vector)
+        error = vector - dot(matrix, _coefficients)
         return _coefficients, error
 
     @classmethod
@@ -85,12 +86,12 @@ class Collocation(VariationalProective):
             return lambdify(cls._functional_system.variable,
                             differential_operator(cls._functional_system.get_function(j)), 'numpy')(cls.__nodes[i])
 
-        cls.__nodes = np.linspace(*cls._functional_system.borders, n, endpoint=True)
+        cls.__nodes = linspace(*cls._functional_system.borders, n, endpoint=True)
 
-        matrix = np.array(
+        matrix = array(
             [[make_matrix_element(i, j) for j in range(len(cls.__nodes))] for i in range(len(cls.__nodes))]
         )
-        vector = np.array([rhs_homogeneous(cls.__nodes[i]) for i in range(n)])
+        vector = array([rhs_homogeneous(cls.__nodes[i]) for i in range(n)])
 
         return matrix, vector
 
@@ -99,8 +100,8 @@ class LeastSquares(VariationalProective):
     @classmethod
     def coefficients(cls, n, equation_rhs, differential_operator) -> Tuple[Callable[[float], float], list]:
         matrix, vector = cls.__build_system(n, equation_rhs, differential_operator)
-        _coefficients = np.linalg.solve(matrix, vector)
-        error = vector - np.dot(matrix, _coefficients)
+        _coefficients = linalg.solve(matrix, vector)
+        error = vector - dot(matrix, _coefficients)
         return _coefficients, error
 
     @classmethod
@@ -122,8 +123,8 @@ class LeastSquares(VariationalProective):
                                                cls._functional_system.get_function(j)),
                                            'numpy'), *cls._functional_system.borders)[0]
 
-        matrix = np.array([[make_matrix_element(i, j) for i in range(n)] for j in range(n)])
-        vector = np.array([make_vector_element(j) for j in range(n)])
+        matrix = array([[make_matrix_element(i, j) for i in range(n)] for j in range(n)])
+        vector = array([make_vector_element(j) for j in range(n)])
         print(matrix)
         return matrix, vector
 
@@ -132,8 +133,8 @@ class BubnovGalerkin(VariationalProective):
     @classmethod
     def coefficients(cls, n, equation_rhs, differential_operator) -> Tuple[Callable[[float], float], list]:
         matrix, vector = cls.__build_system(n, equation_rhs, differential_operator)
-        __coefficients = np.linalg.solve(matrix, vector)
-        error = vector - np.dot(matrix, __coefficients)
+        __coefficients = linalg.solve(matrix, vector)
+        error = vector - dot(matrix, __coefficients)
         return __coefficients, error
 
     @classmethod
@@ -152,9 +153,9 @@ class BubnovGalerkin(VariationalProective):
                 lambdify(cls._functional_system.variable, rhs_homogeneous() * cls._functional_system.get_function(i),
                          "numpy"), *cls._functional_system.borders)[0]
 
-        matrix = np.array(
+        matrix = array(
             [[make_matrix_element(i, j) for i in range(n)] for j in range(n)]
         )
-        vector = np.array([make_vector_element(i) for i in range(n)])
+        vector = array([make_vector_element(i) for i in range(n)])
 
         return matrix, vector

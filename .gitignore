@@ -1,13 +1,6 @@
 
-\.idea/
-
-eigenvalues-problem/\.vscode/
-
-eigenvalues-problem/__pycache__/
-
-linear-equations-systems/__pycache__/
-
-\.vscode/
+.idea/
+.vscode/
 
 *.png
 
@@ -23,3 +16,4 @@ approximations/__pycache__/
 *.pyc
 
 eigenvalues-problem/eigentvalues/__init__.
+/venv/

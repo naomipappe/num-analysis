@@ -1,5 +1,6 @@
 from typing import Tuple
 
+
 class FunctionalSystem:
     def __init__(self, borders: tuple, alpha: float, beta: float, gamma: float, delta: float, k, mu_1, mu_2, variable):
         self._variable = variable
