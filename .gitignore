@@ -3,17 +3,7 @@
 .vscode/
 
 *.png
-
-linear-equations-systems/data\.txt
-
-interpolation/__pycache__/
-integration/__pycache__/
-approximations/__pycache__/
-
-
 *.txt
-
 *.pyc
 
-eigenvalues-problem/eigentvalues/__init__.
-/venv/
+
