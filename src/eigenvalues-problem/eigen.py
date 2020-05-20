@@ -1,13 +1,13 @@
 import numpy as np
+
+
 def normalize(x):
-        return x/sum([x[i]**2 for i in range(len(x))])
+    return x/sum([x[i]**2 for i in range(len(x))])
 
 
 def scalar_products_method(matrix, eps=1e-6):
     def mu(x, e):
         return np.dot(np.reshape(x, (n,)), np.reshape(e, (n,)))
-
-    
 
     matrix = np.array(matrix)
     n = len(matrix)
@@ -32,7 +32,7 @@ def scalar_products_method(matrix, eps=1e-6):
 def power_method(matrix, eps=1e-8):
     matrix = np.array(matrix)
     n = len(matrix)
-    x0 = normalize(np.random.rand(n,1))
+    x0 = normalize(np.random.rand(n, 1))
     x_cur = np.dot(matrix, x0)
     mu_cur = x_cur[0]/x0[0]
     while True:
