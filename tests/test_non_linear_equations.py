@@ -1,6 +1,6 @@
 import unittest
 from numpy import sin, cos
-from src.nonlineareq.eq import secant, newton, relax
+from src.nonlineareq.non_linear_equations import secant, newton, relax
 
 
 class TestSecantMethod(unittest.TestCase):
@@ -17,8 +17,8 @@ class TestSecantMethod(unittest.TestCase):
             return sin(x+2)-x**2+2*x-1
 
         # Act
-        secant_root = secant(target_equation, initial_root_candidate,
-                             next_root_candidate, left_border, right_border, eps=1e-6)
+        secant_root = secant(target_equation, left_border, right_border, initial_root_candidate,
+                             next_root_candidate, delta=1e-6)
 
         # Assert
         self.assertAlmostEqual(ROOT, secant_root, delta=1e-6)
@@ -61,7 +61,7 @@ class TestRelaxationMethod(unittest.TestCase):
 
         # Act
         relax_root = relax(target_equation, initial_root_candidate,
-                           left_border, right_border,  eps=1e-6)
+                           left_border, right_border,  delta=1e-6)
 
         # Assert
         self.assertAlmostEqual(ROOT, relax_root, delta=1e-6)
