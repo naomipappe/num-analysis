@@ -1,4 +1,4 @@
-
+/.vscode/
 /.idea/
 
 *.png
@@ -6,4 +6,3 @@
 *.pyc
 *.csv
 
-/.vscode/
