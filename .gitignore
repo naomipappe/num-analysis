@@ -1,9 +1,9 @@
 
-.idea/
-.vscode/
+/.idea/
 
 *.png
 *.txt
 *.pyc
 *.csv
 
+/.vscode/
