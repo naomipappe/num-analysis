@@ -29,7 +29,8 @@ if __name__ == "__main__":
     n = int(input("Введите степень полинома: "))
 
     # trigonometric = QuadraticApproximation(a, b, approximated, fs.TrigonometricSystem())
-    exponential = QuadraticApproximation(a, b, approximated, fs.ExponentialSystem())
+    exponential = QuadraticApproximation(
+        a, b, approximated, fs.ExponentialSystem())
     # polynomial = QuadraticApproximation(a, b, approximated, fs.PolynomialSystem())
     legandre = LegendreApproximation(a, b, approximated)
     discrete = DiscreteApproximation(a, b, approximated)
@@ -53,7 +54,8 @@ if __name__ == "__main__":
 
     # print()
     #
-    n = int(input("Введите кол-во узлов для нахождения ЭНСКП по системе многочленов Лежандра: "))
+    n = int(input(
+        "Введите кол-во узлов для нахождения ЭНСКП по системе многочленов Лежандра: "))
     Qn_legandre = legandre.get_legendre_approximation(n, True)
     title = "Legandre continuous approximation"
     util.plot_approximation(a, b, title, f=approximated, phi=Qn_legandre)

@@ -1,19 +1,8 @@
-
-.idea/
-.vscode/
+/.vscode/
+/.idea/
 
 *.png
-
-linear-equations-systems/data\.txt
-
-interpolation/__pycache__/
-integration/__pycache__/
-approximations/__pycache__/
-
-
 *.txt
-
 *.pyc
+*.csv
 
-eigenvalues-problem/eigentvalues/__init__.
-/venv/
