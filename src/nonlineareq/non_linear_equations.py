@@ -2,23 +2,11 @@ import numpy as np
 from typing import Callable
 
 
-def fault(initial_root_candidate: float, left_border: float, right_border: float):
-    if f(initial_root_candidate)*f(right_border) < 0:
+def fault(lhs: Callable[[float], float], initial_root_candidate: float, left_border: float, right_border: float):
+    if lhs(initial_root_candidate)*lhs(right_border) < 0:
         return abs(right_border-initial_root_candidate)
     else:
         return abs(left_border-initial_root_candidate)
-
-
-def f(x) -> float:
-    return np.sin(x+2)-x**2+2*x-1
-
-
-def d(x) -> float:
-    return (x+1)*np.e**x-1
-
-
-def d2(x) -> float:
-    return (x+2)*np.e**x
 
 
 def input_check(left_border: float, right_border: float, initial_root_candidate: float):
@@ -30,7 +18,7 @@ def input_check(left_border: float, right_border: float, initial_root_candidate:
             f"Invalid starting approximation, x0={initial_root_candidate} is out of boundaries [{left_border},{right_border}]")
 
 
-def newton(lhs: Callable[[float], float], lhs_derr: Callable[[float], float],
+def newton(lhs: Callable[[float], float], lhs_derr: Callable[[float], float], lhs_derr_2: Callable[[float], float],
            left_border: float, right_border: float, initial_root_candidate: float = None, delta: float = 1e-4) -> float:
     """
     lhs:Left-hand side of the equation\n
@@ -48,9 +36,9 @@ def newton(lhs: Callable[[float], float], lhs_derr: Callable[[float], float],
             f"No root can be found on [{left_border},{right_border}]")
 
     if initial_root_candidate is None:
-        if lhs(left_border)*d2(left_border) > 0:
+        if lhs(left_border)*lhs_derr_2(left_border) > 0:
             initial_root_candidate = left_border
-        elif lhs(right_border)*d2(right_border) > 0:
+        elif lhs(right_border)*lhs_derr_2(right_border) > 0:
             initial_root_candidate = right_border
         else:
             initial_root_candidate = (left_border+right_border)/2
@@ -97,7 +85,7 @@ def secant(lhs: Callable[[float], float], left_border: float, right_border: floa
     return cur
 
 
-def relax(lhs: Callable[[float], float], left_border: float, right_border: float,
+def relax(lhs: Callable[[float], float], lhs_derr: Callable[[float], float], left_border: float, right_border: float,
           initial_root_candidate: float,  delta: float = 1e-6) -> float:
     """
     lhs:Left-hand side of the equation\n
@@ -110,12 +98,12 @@ def relax(lhs: Callable[[float], float], left_border: float, right_border: float
     input_check(left_border, right_border, initial_root_candidate)
 
     x_vals = np.linspace(left_border, right_border, min(int(1./delta), 10**5))
-    min_val, max_val = round(np.min(np.abs(d(x_vals))), 6), round(
-        np.max(np.abs(d(x_vals))), 6)
+    min_val, max_val = round(np.min(np.abs(lhs_derr(x_vals))), 6), round(
+        np.max(np.abs(lhs_derr(x_vals))), 6)
     tau = 2./(min_val+max_val)
 
     def phi(x) -> float:
-        return x-np.sign(d(x))*tau*lhs(x)
+        return x-np.sign(lhs_derr(x))*tau*lhs(x)
 
     i = 0
     xi = initial_root_candidate

@@ -3,6 +3,18 @@ from numpy import sin, cos
 from src.nonlineareq.non_linear_equations import secant, newton, relax
 
 
+def lhs(x: float) -> float:
+    return sin(x+2)-x**2+2*x-1
+
+
+def lhs_derr(x: float) -> float:
+    return -2*x+cos(x+2)+2
+
+
+def lhs_derr_2(x: float) -> float:
+    return -sin(x+2)-2
+
+
 class TestSecantMethod(unittest.TestCase):
     def test_sine_equation(self):
 
@@ -13,11 +25,8 @@ class TestSecantMethod(unittest.TestCase):
         next_root_candidate = 0.05
         ROOT = 0.0606335
 
-        def target_equation(x: float) -> float:
-            return sin(x+2)-x**2+2*x-1
-
         # Act
-        secant_root = secant(target_equation, left_border, right_border, initial_root_candidate,
+        secant_root = secant(lhs, left_border, right_border, initial_root_candidate,
                              next_root_candidate, delta=1e-6)
 
         # Assert
@@ -33,14 +42,8 @@ class TestNewtonsMethod(unittest.TestCase):
         initial_root_candidate = 0.0
         ROOT = 0.0606335
 
-        def target_equation(x: float) -> float:
-            return sin(x+2)-x**2+2*x-1
-
-        def target_equation_derrivative(x: float) -> float:
-            return 2 - 2*x + cos(2 + x)
-
         # Act
-        newtons_root = newton(target_equation, target_equation_derrivative,
+        newtons_root = newton(lhs, lhs_derr, lhs_derr_2,
                               left_border, right_border, initial_root_candidate, delta=1e-6)
 
         # Assert
@@ -56,12 +59,9 @@ class TestRelaxationMethod(unittest.TestCase):
         initial_root_candidate = 0.0
         ROOT = 0.0606335
 
-        def target_equation(x: float) -> float:
-            return sin(x+2)-x**2+2*x-1
-
         # Act
-        relax_root = relax(target_equation, initial_root_candidate,
-                           left_border, right_border,  delta=1e-6)
+        relax_root = relax(lhs, lhs_derr, left_border,
+                           right_border, initial_root_candidate,  delta=1e-6)
 
         # Assert
         self.assertAlmostEqual(ROOT, relax_root, delta=1e-6)
