@@ -69,6 +69,9 @@ def secant(lhs: Callable[[float], float], left_border: float, right_border: floa
 
     input_check(left_border, right_border, initial_root_candidate)
     input_check(left_border, right_border, next_root_candidate)
+    if lhs(left_border)*lhs(right_border) >= 0:
+        raise ValueError(
+            f"No root can be found on [{left_border},{right_border}]")
     cur, prev = next_root_candidate, initial_root_candidate
 
     def step(cur):
@@ -96,7 +99,9 @@ def relax(lhs: Callable[[float], float], lhs_derr: Callable[[float], float], lef
     returns Approximated root of the lhs in the inteval
     """
     input_check(left_border, right_border, initial_root_candidate)
-
+    if lhs(left_border)*lhs(right_border) >= 0:
+        raise ValueError(
+            f"No root can be found on [{left_border},{right_border}]")
     x_vals = np.linspace(left_border, right_border, min(int(1./delta), 10**5))
     min_val, max_val = round(np.min(np.abs(lhs_derr(x_vals))), 6), round(
         np.max(np.abs(lhs_derr(x_vals))), 6)
