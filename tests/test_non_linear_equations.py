@@ -1,6 +1,6 @@
 import unittest
 from numpy import sin, cos
-from src.nonlineareq.non_linear_equations import secant, newton, relax
+from numanalysis.nonlineareq.non_linear_equations import secant, newton, relax
 
 
 def lhs(x: float) -> float:

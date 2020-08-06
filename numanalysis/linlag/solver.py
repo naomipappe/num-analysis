@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from src.utilities.util import decompose, inverse, matrix_norm, vec_norm, cond
+from numanalysis.utilities.util import decompose, inverse, matrix_norm, vec_norm, cond
 np.set_printoptions(10)
 
 

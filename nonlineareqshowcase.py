@@ -1,4 +1,4 @@
-from src.nonlineareq.non_linear_equations import secant
+from numanalysis.nonlineareq.non_linear_equations import secant
 from numpy import sin, cos
 
 

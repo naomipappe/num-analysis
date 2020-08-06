@@ -4,7 +4,7 @@ from numpy import ndarray
 from numpy import array, empty
 from numpy.testing import assert_almost_equal
 from numpy.linalg import solve
-from src.linlag.solver import square_root_method
+from numanalysis.linlag.solver import square_root_method
 
 
 def _generate_test_system_ndarray(n: int) -> Tuple[ndarray, ndarray]:
