@@ -13,4 +13,5 @@ def lhs_derr(x: float) -> float:
 def lhs_derr_2(x: float) -> float:
     return -sin(x+2)-2
 
+
 print(f"Equation root is : {secant(lhs,1,2,1,1.5)}")
