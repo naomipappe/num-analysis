@@ -1,5 +1,4 @@
 from numpy import empty, ndarray
-from numpy.linalg import cholesky
 from typing import Tuple
 from numanalysis.linlag.linalgmethods import square_root_method
 from numanalysis.utilities.util import decompose
@@ -16,6 +15,5 @@ def _generate_test_system(n: int) -> Tuple[ndarray, ndarray]:
             else:
                 test_system_matrix[i][j] = 2*(i+j)/(10+n)
     return test_system_matrix, test_system_vector
-
 
 square_root_method(*_generate_test_system(5))

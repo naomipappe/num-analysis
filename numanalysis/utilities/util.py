@@ -2,9 +2,15 @@ from numpy import ndarray
 from numpy import array, sign, sqrt, conj, transpose, empty, dot, eye,zeros
 from typing import List, Type, Tuple
 
-
+# TODO document this properly
+# this is Cholesky decomposition but with tweaks, that is it does not require matrix to be positive - definite
+# for instance, it can decompose the next matrix: 
+# [1,2]
+# [2,1]
+# while numpy.linalg.cholseky will fail
 def decompose(matrix: array) -> Tuple[ndarray, ndarray, ndarray]:
     '''
+    
     returns S*DS decomposition of a matrix
     '''
     n = len(matrix)
