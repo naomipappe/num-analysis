@@ -1,7 +1,6 @@
 from numpy import empty, ndarray
 from typing import Tuple
 from numanalysis.linlag.linalgmethods import square_root_method
-from numanalysis.utilities.util import decompose
 
 
 def _generate_test_system(n: int) -> Tuple[ndarray, ndarray]:
@@ -17,3 +16,4 @@ def _generate_test_system(n: int) -> Tuple[ndarray, ndarray]:
     return test_system_matrix, test_system_vector
 
 square_root_method(*_generate_test_system(5))
+

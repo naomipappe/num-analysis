@@ -11,7 +11,7 @@ from numpy import inf, pi, sqrt
 
 def upper_border_approximation(eps: float) -> float:
     upper_border = 1 / 3 * ((9 * eps ** 2 + 3 * sqrt(9 * eps ** 4 + 16 * eps ** 2) + 8) ** (1 / 3) / eps + 4 / (
-                eps * (9 * eps ** 2 + 3 * sqrt(9 * eps ** 4 + 16 * eps ** 2) + 8)) + 2 / eps)
+        eps * (9 * eps ** 2 + 3 * sqrt(9 * eps ** 4 + 16 * eps ** 2) + 8)) + 2 / eps)
     print("Приближение верхнего предела интегрирования: ", upper_border)
     return upper_border
 
@@ -37,10 +37,12 @@ def main(borders: tuple, integrand, integrand_nth_derivative, tolerance):
     integral.integrand = integrand
     integral.integrand_nth_derivative = integrand_nth_derivative
     formula = formulas.MeanRectangleFormula
-    runge_value = integral.integrate(tolerance, strategy.AprioriEstimationStrategy, formula)
+    runge_value = integral.integrate(
+        tolerance, strategy.AprioriEstimationStrategy, formula)
     print('I =', runge_value + tolerance / 2)
     print('True value =', pi / sqrt(2))
-    adaptive_value = integral.integrate(tolerance, strategy.RungeStrategy, formula)
+    adaptive_value = integral.integrate(
+        tolerance, strategy.RungeStrategy, formula)
     print('I =', adaptive_value + tolerance / 2)
     print('True value =', pi / sqrt(2))
 

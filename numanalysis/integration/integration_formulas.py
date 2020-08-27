@@ -22,7 +22,8 @@ class QuadraticFormula:
     @classmethod
     def borders_check(cls, left_border, right_border):
         if left_border > right_border:
-            raise ValueError('Left integration border should be smaller than right integration border')
+            raise ValueError(
+                'Left integration border should be smaller than right integration border')
 
     @classmethod
     def quadratic_formula_step_error(cls, integration_borders: tuple, dnf_measure: float, tolerance: float) -> tuple:
@@ -53,7 +54,8 @@ class MeanRectangleFormula(QuadraticFormula):
         integral = 0
         left_border, right_border = integration_borders
         super().borders_check(left_border, right_border)
-        nodes_amount = int(ceil((right_border - left_border) / integration_step))
+        nodes_amount = int(
+            ceil((right_border - left_border) / integration_step))
 
         def node(k: int):
             return left_border + k * integration_step
@@ -65,7 +67,8 @@ class MeanRectangleFormula(QuadraticFormula):
     @classmethod
     def quadratic_formula_step_error(cls, integration_borders: tuple, dnf_measure: float, tolerance: float) -> tuple:
         left_border, right_border = integration_borders
-        step = sqrt(24 * tolerance / (2 * dnf_measure * (right_border - left_border)))
+        step = sqrt(24 * tolerance / (2 * dnf_measure *
+                                      (right_border - left_border)))
         error = (step ** 2) * (right_border - left_border) * dnf_measure / 24
         return error, step
 
@@ -80,7 +83,7 @@ class SimpsonsRule(QuadraticFormula):
         super().borders_check(left_border, right_border)
 
         return (right_border - left_border) / 6 * (
-                integrand(left_border) + 4 * integrand((left_border + right_border) / 2) + integrand(right_border))
+            integrand(left_border) + 4 * integrand((left_border + right_border) / 2) + integrand(right_border))
 
     @classmethod
     def value_composite(cls, integration_borders: tuple, integrand: Callable[[float], float],
@@ -88,20 +91,23 @@ class SimpsonsRule(QuadraticFormula):
         integral = 0
         left_border, right_border = integration_borders
         super().borders_check(left_border, right_border)
-        nodes_amount = int(ceil((right_border - left_border) / integration_step))
+        nodes_amount = int(
+            ceil((right_border - left_border) / integration_step))
 
         def node(k: int) -> float:
             return left_border + k * integration_step
 
         for i in range(0, nodes_amount, 2):
-            integral += integrand(node(i)) + 4 * integrand(node(i + 1)) + integrand(node(i + 2))
+            integral += integrand(node(i)) + 4 * \
+                integrand(node(i + 1)) + integrand(node(i + 2))
 
         return integration_step / 3 * integral
 
     @classmethod
     def quadratic_formula_step_error(cls, integration_borders: tuple, dnf_measure: float, tolerance: float) -> tuple:
         left_border, right_border = integration_borders
-        step = (tolerance * 2880 / (2 * dnf_measure * (right_border - left_border))) ** (1 / 4)
+        step = (tolerance * 2880 / (2 * dnf_measure *
+                                    (right_border - left_border))) ** (1 / 4)
         error = dnf_measure * (right_border - left_border) * step ** 4 / 2880
         return error, step
 
@@ -135,6 +141,7 @@ class TrapezoidalFormula(QuadraticFormula):
     @classmethod
     def quadratic_formula_step_error(cls, integration_borders: tuple, dnf_measure: float, tolerance: float) -> tuple:
         left_border, right_border = integration_borders
-        step = sqrt(12 * tolerance / (2 * (right_border - left_border) * dnf_measure))
+        step = sqrt(12 * tolerance /
+                    (2 * (right_border - left_border) * dnf_measure))
         error = (step ** 2) * (right_border - left_border) * dnf_measure / 12
         return error, step
