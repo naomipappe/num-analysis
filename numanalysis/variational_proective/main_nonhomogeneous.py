@@ -2,7 +2,8 @@ from numpy import linspace
 from scipy import integrate
 from sympy import lambdify
 from sympy.abc import symbols
-from sympy.parsing.sympy_parser import (parse_expr, standard_transformations, implicit_multiplication, )
+from sympy.parsing.sympy_parser import (
+    parse_expr, standard_transformations, implicit_multiplication, )
 
 from functional.fun_sys import BasisFunction
 from methods.methods import Ritz, BubnovGalerkin
@@ -62,7 +63,7 @@ def mu_2() -> float:
 
 def differential_operator(u):
     return (-k_expression * u.diff(variable)).diff(variable) + p_expression * u.diff(variable) + \
-           q_expression * u
+        q_expression * u
 
 # endregion
 
@@ -73,12 +74,14 @@ def main():
     nodes = linspace(BORDER_LEFT, BORDER_RIGHT, 50, endpoint=True)
     # region Ritz
     n_Ritz = 8
-    functional_system = BasisFunction((BORDER_LEFT, BORDER_RIGHT), alpha, beta, gamma, delta, k, mu_1, mu_2, variable)
+    functional_system = BasisFunction(
+        (BORDER_LEFT, BORDER_RIGHT), alpha, beta, gamma, delta, k, mu_1, mu_2, variable)
     Ritz.set_functional_system(functional_system)
 
     approximation_ritz, error_ritz = Ritz.approximation(n_Ritz, differential_operator(solution_exact_expression),
                                                         differential_operator)
-    plotter(nodes, solution_exact, approximation_ritz, save=False, name=f'Ritz{n_Ritz}')
+    plotter(nodes, solution_exact, approximation_ritz,
+            save=False, name=f'Ritz{n_Ritz}')
     norm_err_ritz = \
         integrate.quad(lambda x: (solution_exact(x) - approximation_ritz(x)) ** 2, BORDER_LEFT, BORDER_RIGHT)[0] / \
         (BORDER_RIGHT - BORDER_LEFT)
@@ -90,13 +93,15 @@ def main():
     BubnovGalerkin.set_functional_system(functional_system)
 
     approximation_bubnov, error_bubnov = BubnovGalerkin.approximation(n_Bubnov,
-                                                                      differential_operator(solution_exact_expression),
+                                                                      differential_operator(
+                                                                          solution_exact_expression),
                                                                       differential_operator)
     norm_err_bubnov = \
         integrate.quad(lambda x: (solution_exact(x) - approximation_bubnov(x)) ** 2, BORDER_LEFT, BORDER_RIGHT)[0] / \
         (BORDER_RIGHT - BORDER_LEFT)
 
-    plotter(nodes, solution_exact, approximation_bubnov, save=False, name=f'Bubnov{n_Bubnov}')
+    plotter(nodes, solution_exact, approximation_bubnov,
+            save=False, name=f'Bubnov{n_Bubnov}')
     print('Отклонение метода Бубнова-Галёркина по норме:', norm_err_bubnov)
     # endregion
 

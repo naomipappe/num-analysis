@@ -1,6 +1,9 @@
+from operator import eq
 import unittest
 from numpy import sin, cos
-from src.nonlineareq.non_linear_equations import secant, newton, relax
+from numpy.core.defchararray import equal
+from numpy.core.multiarray import result_type
+from numanalysis.nonlineareq.non_linear_equations import *
 
 
 def lhs(x: float) -> float:
@@ -24,13 +27,15 @@ class TestSecantMethod(unittest.TestCase):
         initial_root_candidate = 0.0
         next_root_candidate = 0.05
         ROOT = 0.0606335
+        equation = NonLinearEquation(
+            lhs, left_border, right_border, initial_root_candidate, lhs_derr)
 
         # Act
-        secant_root = secant(lhs, left_border, right_border, initial_root_candidate,
-                             next_root_candidate, delta=1e-6)
+        secant_root = Secant.solve(equation)
 
         # Assert
-        self.assertAlmostEqual(ROOT, secant_root, delta=1e-6)
+        self.assertAlmostEqual(
+            ROOT, secant_root.calculation_result, delta=1e-6)
 
 
 class TestNewtonsMethod(unittest.TestCase):
@@ -41,13 +46,14 @@ class TestNewtonsMethod(unittest.TestCase):
         right_border = 0.1
         initial_root_candidate = 0.0
         ROOT = 0.0606335
-
+        equation = NonLinearEquation(
+            lhs, left_border, right_border, initial_root_candidate, lhs_derr, lhs_derr_2)
         # Act
-        newtons_root = newton(lhs, lhs_derr, lhs_derr_2,
-                              left_border, right_border, initial_root_candidate, delta=1e-6)
+        newtons_root = Newton.solve(equation)
 
         # Assert
-        self.assertAlmostEqual(ROOT, newtons_root, delta=1e-6)
+        self.assertAlmostEqual(
+            ROOT, newtons_root.calculation_result, delta=1e-6)
 
 
 class TestRelaxationMethod(unittest.TestCase):
@@ -58,10 +64,11 @@ class TestRelaxationMethod(unittest.TestCase):
         right_border = 0.1
         initial_root_candidate = 0.0
         ROOT = 0.0606335
-
+        equation = NonLinearEquation(
+            lhs, left_border, right_border, initial_root_candidate
+        )
         # Act
-        relax_root = relax(lhs, lhs_derr, left_border,
-                           right_border, initial_root_candidate,  delta=1e-6)
+        relax_root = Relaxation.solve(equation)
 
         # Assert
-        self.assertAlmostEqual(ROOT, relax_root, delta=1e-6)
+        self.assertAlmostEqual(ROOT, relax_root.calculation_result, delta=1e-6)
