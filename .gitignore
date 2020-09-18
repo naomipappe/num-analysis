@@ -142,6 +142,9 @@ dmypy.json
 .vscode/*
 *.code-workspace
 
+
+### IDEA ###
+.idea/*
 ### VisualStudioCode Patch ###
 # Ignore all local history of files
 .history

@@ -14,7 +14,7 @@ def lhs_derr(x: float) -> float:
 def lhs_derr_2(x: float) -> float:
     return -sin(x+2)-2
 
-
+  
 left_border, right_border = 1, 2
 initial_root_candidate = 1
 

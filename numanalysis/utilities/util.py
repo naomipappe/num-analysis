@@ -1,11 +1,11 @@
-from numpy import ndarray
-from numpy import array, sign, sqrt, conj, transpose, empty, dot, eye,zeros
+from typing import Tuple
+
+from numpy import conj, ndarray, sign, sqrt, transpose, zeros
 from numpy.linalg import inv
-from typing import List, Type, Tuple
 
 # TODO document this properly
 # this is Cholesky decomposition but with tweaks, that is it does not require matrix to be positive - definite
-# for instance, it can decompose the next matrix: 
+# for instance, it can decompose the next matrix:
 # [1,2]
 # [2,1]
 # while numpy.linalg.cholseky will fail
@@ -17,6 +17,8 @@ def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
     s = 0
     S = zeros(shape=(n, n))
     D = zeros(shape=(n, n))
+    D[0][0] = sign(matrix[0][0])
+    S[0][0] = sqrt(abs(matrix[0][0]))
     for j in range(1, n):
         S[0][j] = matrix[0][j]/(S[0][0]*D[0][0])
     for i in range(1, n):
@@ -30,17 +32,19 @@ def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
     ST = transpose(conj(S))
     return (ST, D, S)
 
-def vector_norm(x):
+  
+def vector_norm(x: ndarray) -> float:
     return max(abs(x))
 
 
-def matrix_norm(matrix):
+def matrix_norm(matrix: ndarray) -> float:
     max_sum = 0
     for i in range(len(matrix)):
         tmp_sum = sum([abs(matrix[i, j]) for j in range(len(matrix))])
         if tmp_sum > max_sum:
             max_sum = tmp_sum
     return max_sum
+  
 
-def cond(matrix):
+def cond(matrix: ndarray) -> float:
     return matrix_norm(inv(matrix))*matrix_norm(matrix)

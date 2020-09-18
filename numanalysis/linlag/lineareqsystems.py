@@ -1,13 +1,11 @@
-import numpy as np
 from typing import List
-from numanalysis.utilities.util import decompose, matrix_norm, vector_norm, cond
+
+import numpy as np
+
+from numanalysis.utilities.util import decompose, vector_norm
 
 
 def square_root_method(matrix: np.ndarray or List[List[float or int]], vector: np.ndarray) -> np.ndarray:
-
-    if matrix is None or vector is None:
-        raise TypeError('Arguments should not be None')
-
     if isinstance(matrix, list):
         matrix = np.array(matrix)
 
@@ -20,7 +18,8 @@ def square_root_method(matrix: np.ndarray or List[List[float or int]], vector: n
 
     C = np.dot(ST, D)
 
-    X1 = np.zeros(shape)
+
+    X1 = np.zeros(n)
 
     for i in range(n):
         X1[i] = (vector[i]-np.dot(X1, C[i]))/C[i][i]
