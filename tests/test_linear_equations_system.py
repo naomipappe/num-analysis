@@ -34,15 +34,6 @@ def _generate_test_system_list(n: int) -> Tuple[List[List[float]], List[float]]:
 
 
 class TestSquareRootMethod(unittest.TestCase):
-
-    def test_system_empty_input(self):
-
-        # Arrange
-        matrix, vector = None, None
-
-        # Assert
-        self.assertRaises(TypeError, square_root_method, matrix, vector)
-
     def test_system_ndarray_input(self):
 
         # Arrange
@@ -85,7 +76,6 @@ class TestJacobiMethod(unittest.TestCase):
                             numpy_solution, decimal=6)
 
     def test_system_list_input(self):
-
         # Arrange
         matrix, vector = _generate_test_system_list(10)
         # Act
