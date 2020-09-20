@@ -1,4 +1,4 @@
-from numpy.testing import assert_equal
+from numpy.testing import assert_almost_equal
 from numanalysis.nonlineareq.non_linear_equations import *
 from numpy import sin, cos
 
@@ -21,4 +21,4 @@ initial_root_candidate = 1
 equation = NonLinearEquation(lhs, left_border, right_border, initial_root_candidate, lhs_derr)
 result = Secant.solve(equation)
 print(result)
-assert_equal(result.calculation_result, 1.1257726213960026)
+assert_almost_equal(result.calculation_result, 1.1257726213960026)

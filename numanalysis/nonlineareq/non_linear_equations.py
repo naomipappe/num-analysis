@@ -34,14 +34,15 @@ class NonLinearEquation:
             raise ValueError(
                 f'Invalid boundaries, left border ={self.left_border} >= right border ={self.right_border}'
             )
-        if self.initial_root_candidate < self.left_border or self.initial_root_candidate > self.right_border:
-            raise ValueError(
-                f'Invalid starting approximation, initial root candidate={self.initial_root_candidate} '
-                f'is out of boundaries[{self.left_border}, {self.right_border}] '
-            )
         if self.lhs(self.left_border) * self.lhs(self.right_border) > 0:
             raise ValueError(
                 f'No root can be found on the segment [{self.left_border}, {self.right_border}]'
+            )
+        if self.initial_root_candidate is not None and \
+                (self.initial_root_candidate < self.left_border or self.initial_root_candidate > self.right_border):
+            raise ValueError(
+                f'Invalid starting approximation, initial root candidate={self.initial_root_candidate} '
+                f'is out of boundaries[{self.left_border}, {self.right_border}] '
             )
 
     def initial_approximation_fault(self):
@@ -110,6 +111,7 @@ class Secant(NonLinearEquationMethod):
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
         """
         Solve a non-linear equation using the secant method
+
         Parameters
         ----------
         equation : NonLinearEquation
@@ -118,21 +120,27 @@ class Secant(NonLinearEquationMethod):
         Returns
         -------
         result : NonLinearEquationResult
+
         NonLinearEquationResult object, containing the resulting root approximation
         as well as calculation logs
 
         Examples
         --------
         Solve the equation sin(x+2)-x**2+2*x-1 = 0
+
         from numanalysis.nonlineareq.non_linear_equations import Secant, NonLinearEquation, NonLinearEquationResult
 
         def lhs(x: float) -> float:
             return sin(x+2)-x**2+2*x-1
 
+        def lhs_derr(x: float) -> float:
+            return -2*x+cos(x+2)+2
+
         left_border, right_border = 1, 2
         initial_root_candidate = 1
 
         equation = NonLinearEquation(lhs, left_border, right_border, initial_root_candidate, lhs_derr)
+
         result = Secant.solve(equation)
         """
 
@@ -147,6 +155,7 @@ class Secant(NonLinearEquationMethod):
                 root_candidate)
 
         i = 0
+        cls.__initial_root(equation)
         root = equation.initial_root_candidate
         result = NonLinearEquationResult()
         while abs(step(root) - root) > equation.delta or equation.lhs(step(root)) > equation.delta:
@@ -162,22 +171,44 @@ class Secant(NonLinearEquationMethod):
     @classmethod
     def __initial_root(cls, equation: NonLinearEquation):
         if equation.initial_root_candidate is None:
-            middle_point = (equation.left_border + equation.right_border) / 2
-            equation.initial_root_candidate = (equation.closest_border() + middle_point) / 2
+            equation.initial_root_candidate = (equation.left_border + equation.right_border) / 2
+            equation.initial_root_candidate = (equation.closest_border() + equation.initial_root_candidate) / 2
 
 
 class Relaxation(NonLinearEquationMethod):
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
         """
-        lhs: Left-hand side of the equation\n
-        initial_root_candidate: Initial root approximation\n
-        left_border: Left border of the search interval\n
-        right_border: Right border of the search interval\n
-        delta: Tolerated method error\n
-        returns Approximated root of the lhs in the interval
-        """
+        Solve a non-linear equation using the Relaxation method
 
+        Parameters
+        ----------
+        equation : NonLinearEquation
+        NonLinearEquation object, with equation left-hand side derivative initialised
+
+        Returns
+        -------
+        result : NonLinearEquationResult
+
+        NonLinearEquationResult object, containing the resulting root approximation
+        as well as calculation logs
+
+        Examples
+        --------
+        Solve the equation sin(x+2)-x**2+2*x-1 = 0
+
+        from numanalysis.nonlineareq.non_linear_equations import Relaxation, NonLinearEquation, NonLinearEquationResult
+
+        def lhs(x: float) -> float:
+            return sin(x+2)-x**2+2*x-1
+
+        left_border, right_border = 1, 2
+        initial_root_candidate = 1
+
+        equation = NonLinearEquation(lhs, left_border, right_border, initial_root_candidate)
+
+        result = Relaxation.solve(equation)
+        """
         root = (equation.closest_border() + equation.initial_root_candidate) / 2
         previous_root = equation.initial_root_candidate
 
