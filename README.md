@@ -27,6 +27,6 @@ equation = NonLinearEquation(lhs, left_border, right_border, initial_root_candid
 result = Secant.solve(equation)
 assert_almost_equal(result.calculation_result, 1.1257726213960026)
 ```
-> Other methods are used in a similar way
+> Other methods are used in a similar fashion.
 ## Linear equations system
 ## Eigenvalues problem
