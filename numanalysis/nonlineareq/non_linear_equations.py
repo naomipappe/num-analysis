@@ -6,6 +6,10 @@ import numpy as np
 
 @dataclass
 class NonLinearEquationResult:
+    """
+    This class represents the non - linear equation solution, holding the solution itself
+    as well as calculation logs for pretty printing
+    """
     calculation_result: float = 0
     log: list = field(default_factory=list)
 
@@ -18,6 +22,9 @@ class NonLinearEquationResult:
 
 @dataclass
 class NonLinearEquation:
+    """
+    This class represents the non - linear equation and all the data that is required for solving it
+    """
     lhs: Callable[[float or np.ndarray], float]
     left_border: float
     right_border: float
@@ -30,6 +37,10 @@ class NonLinearEquation:
         self.__input_check()
 
     def __input_check(self):
+        """
+        Performs the input check, checking that boundaries are valid,
+        root can be found on the interval specified, and that initial root is in the said boundaries
+        """
         if self.left_border >= self.right_border:
             raise ValueError(
                 f'Invalid boundaries, left border ={self.left_border} >= right border ={self.right_border}'
@@ -45,18 +56,49 @@ class NonLinearEquation:
                 f'is out of boundaries[{self.left_border}, {self.right_border}] '
             )
 
-    def initial_approximation_fault(self):
+    def initial_approximation_fault(self) -> float:
+        """
+        Returns
+        -------
+        Initial root approximation error, as a distance to the closest border of the solution
+
+        """
         return abs(self.closest_border() - self.initial_root_candidate)
 
-    def closest_border(self):
+    def closest_border(self) -> float:
+        """
+        Returns
+        -------
+        A border closest to the solution of the equation
+
+        """
         if self.lhs(self.initial_root_candidate) * self.lhs(self.right_border) < 0:
             return self.right_border
         return self.left_border
 
 
 class NonLinearEquationMethod:
+    """
+    This class encapsulates the solution strategy for non - linear equation
+    """
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
+        """
+        Solve a non-linear equation
+
+        Parameters
+        ----------
+        equation : NonLinearEquation
+
+        NonLinearEquation object, with equation left-hand side derivative initialised
+
+        Returns
+        -------
+        result : NonLinearEquationResult
+
+        NonLinearEquationResult object, containing the resulting root approximation
+        as well as calculation logs
+        """
         raise NotImplementedError()
 
     @classmethod
@@ -65,16 +107,48 @@ class NonLinearEquationMethod:
 
 
 class Newton(NonLinearEquationMethod):
+    """
+    This class encapsulates the solution strategy for non - linear equation using Newton's method
+    """
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
         """
-        lhs: Left-hand side of the equation\n
-        lhs_der: Derivative of the left - hand side of the equation\n
-        initial_root_candidate: Initial root approximation\n
-        left_border: Left border of the search interval\n
-        right_border: Right border of the search interval\n
-        delta: Tolerated method error\n
-        returns Approximated root of the lhs in the interval
+        Solve a non-linear equation using the Newton's method
+
+        Parameters
+        ----------
+        equation : NonLinearEquation
+        NonLinearEquation object, with equation left-hand side derivative initialised
+
+        Returns
+        -------
+        result : NonLinearEquationResult
+
+        NonLinearEquationResult object, containing the resulting root approximation
+        as well as calculation logs
+
+        Examples
+        --------
+        Solve the equation sin(x+2)-x**2+2*x-1 = 0
+
+        from numanalysis.nonlineareq.non_linear_equations import Newton, NonLinearEquation, NonLinearEquationResult
+
+        def lhs(x: float) -> float:
+            return sin(x+2)-x**2+2*x-1
+
+        def lhs_der(x: float) -> float:
+            return -2 * x + cos(x + 2) + 2
+
+        def lhs_der_2(x: float) -> float:
+            return -sin(x + 2) - 2
+
+        left_border, right_border = 1, 2
+        initial_root_candidate = 1
+
+        equation = NonLinearEquation(
+            lhs, left_border, right_border, initial_root_candidate, lhs_der, lhs_der_2)
+
+        result = Newton.solve(equation)
         """
         cls.__initial_root(equation)
 
@@ -107,6 +181,9 @@ class Newton(NonLinearEquationMethod):
 
 
 class Secant(NonLinearEquationMethod):
+    """
+    This class encapsulates the solution strategy for non - linear equation using Secant method
+    """
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
         """
@@ -176,6 +253,9 @@ class Secant(NonLinearEquationMethod):
 
 
 class Relaxation(NonLinearEquationMethod):
+    """
+    This class encapsulates the solution strategy for non - linear equation using Relaxation method
+    """
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
         """
