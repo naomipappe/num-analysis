@@ -1,37 +1,39 @@
 from typing import Tuple
 
-from numpy import conj, ndarray, sign, sqrt, transpose, zeros
+from numpy import ndarray, sign, sqrt, zeros
 from numpy.linalg import inv
 
 
-# TODO document this properly
-# this is Cholesky decomposition but with tweaks, that is it does not require matrix to be positive - definite
-# for instance, it can decompose the next matrix:
-# [1,2]
-# [2,1]
-# while numpy.linalg.cholseky will fail
-def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray, ndarray]:
-    '''
-    returns Cholesky decomposition of a matrix
-    '''
+
+def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray]:
+    """
+    
+    Summary
+    -------
+    This is Cholesky decomposition but with tweaks, that is it does not require matrix to be positive - definite.
+
+    Parameters
+    ----------
+    :param matrix: ndarray Matrix to find a decomposition for
+
+    Returns
+    -------
+    Tuple[ndarray, ndarray] : Choletsky decomposition of a matrix
+    
+    """
+    
     n = matrix.shape[0]
-    s = 0
-    D = zeros((n, n))
-    S = zeros((n, n))
-    D[0][0] = sign(matrix[0][0])
-    S[0][0] = sqrt(abs(matrix[0][0]))
-    for j in range(1, n):
-        S[0][j] = matrix[0][j] / (S[0][0] * D[0][0])
-    for i in range(1, n):
-        s = matrix[i][i] - sum([D[l][l] * (abs(S[l][i]) ** 2) for l in range(i)])
-        D[i][i] = sign(s)
-        S[i][i] = sqrt(abs(s))
-        for j in range(i + 1, n):
-            S[i][j] = matrix[i][j] - \
-                      sum([conj(S[l][i]) * S[l][j] * D[l][l] for l in range(i)])
-            S[i][j] /= (S[i][i] * D[i][i])
-    ST = transpose(conj(S))
-    return (ST, D, S)
+    s, d = zeros(shape = (n, n)), zeros(shape = (n, n))
+    
+    for i in range(n):
+        temp = matrix[i][i] - sum(s[k, i]**2 * d[k][k] for k in range(i))
+
+        d[i, i], s[i, i] = sign(temp), sqrt(abs(temp))
+        s[i, i + 1 : n] = matrix[i, i + 1 : n] - sum(s[k, i] * d[k, k] * s[k, i + 1 : n] for k in range(i))
+    
+        s[i, i + 1 : n] /= s[i, i] * d[i, i]
+    
+    return s, d
 
 
 def vector_norm(x: ndarray) -> float:
