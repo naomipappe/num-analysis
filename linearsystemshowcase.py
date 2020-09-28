@@ -1,6 +1,6 @@
 from numpy import empty, ndarray
 from typing import Tuple
-from numanalysis.linlag.linalgmethods import square_root_method
+from numanalysis.linlag.lineareqsystems import square_root_method
 
 
 def _generate_test_system(n: int) -> Tuple[ndarray, ndarray]:

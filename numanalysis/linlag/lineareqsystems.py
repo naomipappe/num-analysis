@@ -5,7 +5,7 @@ import numpy as np
 from numanalysis.utilities.util import decompose, vector_norm
 
 
-def square_root_method(matrix: np.ndarray or List[List[float or int]], vector: np.ndarray) -> np.ndarray:
+def square_root_method(matrix: np.ndarray or List[List[float or int]], vector: np.ndarray or List[float]) -> np.ndarray:
     if isinstance(matrix, list):
         matrix = np.array(matrix)
 
@@ -14,38 +14,39 @@ def square_root_method(matrix: np.ndarray or List[List[float or int]], vector: n
     if isinstance(vector, list):
         vector = np.array(vector)
 
-    ST, D, S = decompose(matrix)
+    s, d = decompose(matrix)
 
-    C = np.dot(ST, D)
-
-
-    X1 = np.zeros(n)
+    c = np.dot(s.T, d)
+    temp = np.zeros(n)
 
     for i in range(n):
-        X1[i] = (vector[i]-np.dot(X1, C[i]))/C[i][i]
+        temp[i] = (vector[i] - np.dot(temp, c[i])) / c[i][i]
 
-    X2 = np.zeros(n)
-    for i in range(n-1, -1, -1):
-        X2[i] = (X1[i]-np.dot(X2, S[i]))/S[i][i]
-    return X2
+    result = np.zeros(n)
+    for i in range(n - 1, -1, -1):
+        result[i] = (temp[i] - np.dot(result, s[i])) / s[i][i]
+    return result
 
 
-def jacobi(matrix, b, eps=1e-10):
-    def step(x):
-        return -np.dot(A, x)-np.dot(B, x)+C
-    n = len(matrix)
-    matrix = np.array(matrix)
+def jacobi(matrix : np.ndarray, vector : np.ndarray, eps=1e-10):
+    def step(result_candidate : np.ndarray):
+        return -np.dot(A, result_candidate) - np.dot(B, result_candidate) + C
+
+    if isinstance(matrix, list):
+        matrix = np.array(matrix)
+    if isinstance(vector, list):
+        vector = np.array(vector)
+    
     matrix = np.maximum(matrix, np.transpose(matrix))
-    b = np.array(b)
+
     AL = np.tril(matrix, -1)
     AR = np.triu(matrix, 1)
-    D_inv = np.linalg.inv(np.diag(np.diag(matrix)))
-    A = np.matmul(D_inv, AL)
-    B = np.matmul(D_inv, AR)
-    C = np.matmul(D_inv, b)
-    xi = np.zeros_like(b)
-    i = 0
-    while(vector_norm(step(xi)-xi) >= eps):
-        i += 1
-        xi = step(xi)
-    return xi
+    d_inverse = np.linalg.inv(np.diag(np.diag(matrix)))
+    A = np.dot(d_inverse, AL)
+    B = np.dot(d_inverse, AR)
+    C = np.dot(d_inverse, vector)
+    result = np.zeros_like(vector)
+    
+    while vector_norm(step(result) - result) >= eps:
+        result = step(result)
+    return result
