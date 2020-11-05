@@ -8,7 +8,7 @@ def plotter(x: list, precise_solution: Callable[[float], float], approximation: 
     plt.plot(x, precise_solution(x), "r")
     plt.plot(x, approximation(x), "b")
     plt.fill_between(
-        x, precise_solution(x), approximation(x), color="yellow", alpha="0.5"
+        x, precise_solution(x), approximation(x), color="yellow", alpha=0.5
     )
     if save:
         try:
