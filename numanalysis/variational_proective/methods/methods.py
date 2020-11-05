@@ -4,7 +4,7 @@ from numpy import array, dot, linalg, linspace
 from scipy import integrate
 from sympy import lambdify
 
-from variational_proective.functional.fun_sys import FunctionalSystem
+from numanalysis.variational_proective.functional.fun_sys import FunctionalSystem
 
 
 class VariationalProective:
@@ -141,7 +141,6 @@ class BubnovGalerkin(VariationalProective):
     def __build_system(cls, n: int, equation_rhs, differential_operator):
         def rhs_homogeneous():
             return equation_rhs - differential_operator(cls._functional_system.get_basic_zero())
-
         def make_matrix_element(i: int, j: int):
             return integrate.quad(lambdify(
                 cls._functional_system.variable,

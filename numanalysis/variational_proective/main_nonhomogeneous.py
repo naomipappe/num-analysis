@@ -5,9 +5,9 @@ from sympy.abc import symbols
 from sympy.parsing.sympy_parser import (
     parse_expr, standard_transformations, implicit_multiplication, )
 
-from functional.fun_sys import BasisFunction
-from methods.methods import Ritz, BubnovGalerkin
-from utilities.util import plotter
+from numanalysis.variational_proective.functional.fun_sys import BasisFunction
+from numanalysis.variational_proective.methods.methods import Ritz, BubnovGalerkin
+from numanalysis.variational_proective.utilities.util import plotter
 
 transformations = standard_transformations + (implicit_multiplication,)
 variable = symbols("x")
