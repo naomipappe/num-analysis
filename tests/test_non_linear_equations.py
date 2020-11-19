@@ -44,7 +44,10 @@ class TestNewtonsMethod(unittest.TestCase):
             lhs, left_border, right_border, initial_root_candidate, lhs_der, lhs_der_2)
         # Act
         newtons_root = Newton.solve(equation)
-
+        if newtons_root:
+            print("there is a root")
+        else:
+            print("none")
         # Assert
         self.assertAlmostEqual(
             root, newtons_root.calculation_result, delta=1e-6)

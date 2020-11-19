@@ -7,14 +7,14 @@ import numpy as np
 @dataclass
 class NonLinearEquationResult:
     """
-    This class represents the non - linear equation solution, holding the solution itself
-    as well as calculation logs for pretty printing
+    This class represents the non - linear equation solution, holding the
+    solution itself as well as calculation logs for pretty printing
     """
-    calculation_result: float = 0
+    calculation_result: float or None = 0
     log: list = field(default_factory=list)
 
     def __str__(self):
-        return f'\n'.join(self.log)
+        return '\n'.join(self.log)
 
     def __repr__(self):
         return f'res = {self.calculation_result}'
@@ -23,14 +23,14 @@ class NonLinearEquationResult:
 @dataclass
 class NonLinearEquation:
     """
-    This class represents the non - linear equation and all the data that is required for solving it
+    Data holder for non - linear equation
     """
     lhs: Callable[[float or np.ndarray], float]
-    left_border: float
-    right_border: float
-    initial_root_candidate: float = None
-    lhs_derivative: Callable[[float or np.ndarray], float] = None
-    lhs_derivative2: Callable[[float or np.ndarray], float] = None
+    lborder: float
+    rborder: float
+    init_root: float or None = None
+    lhs_derivative: Callable[[float or np.ndarray], float] or None = None
+    lhs_derivative2: Callable[[float or np.ndarray], float] or None = None
     delta: float = 1e-6
 
     def __post_init__(self):
@@ -38,32 +38,32 @@ class NonLinearEquation:
 
     def __input_check(self):
         """
-        Performs the input check, checking that boundaries are valid,
-        root can be found on the interval specified, and that initial root is in the said boundaries
+        Checking that boundaries are valid, root can be found on the interval,
+        and that initial root is in the said boundaries
         """
-        if self.left_border >= self.right_border:
+        if self.lborder >= self.rborder:
             raise ValueError(
-                f'Invalid boundaries, left border ={self.left_border} >= right border ={self.right_border}'
+                f'Invalid boundaries, {self.lborder}>={self.rborder}'
             )
-        if self.lhs(self.left_border) * self.lhs(self.right_border) > 0:
+        if self.lhs(self.lborder) * self.lhs(self.rborder) > 0:
             raise ValueError(
-                f'No root can be found on the segment [{self.left_border}, {self.right_border}]'
+                f'No root on [{self.lborder}, {self.rborder}]'
             )
-        if self.initial_root_candidate is not None and \
-                (self.initial_root_candidate < self.left_border or self.initial_root_candidate > self.right_border):
-            raise ValueError(
-                f'Invalid starting approximation, initial root candidate={self.initial_root_candidate} '
-                f'is out of boundaries[{self.left_border}, {self.right_border}] '
-            )
+        if self.init_root is not None:
+            if not (self.lborder <= self.init_root <= self.rborder):
+                raise ValueError(
+                    f'Invalid init,{self.init_root}'
+                    f'out of [{self.lborder}, {self.rborder}] '
+                )
 
     def initial_approximation_fault(self) -> float:
         """
         Returns
         -------
-        Initial root approximation error, as a distance to the closest border of the solution
-
+        Initial root approximation error, as a distance to the closest border
+        of the feasiable region of the problem
         """
-        return abs(self.closest_border() - self.initial_root_candidate)
+        return abs(self.closest_border() - self.init_root)
 
     def closest_border(self) -> float:
         """
@@ -72,9 +72,9 @@ class NonLinearEquation:
         A border closest to the solution of the equation
 
         """
-        if self.lhs(self.initial_root_candidate) * self.lhs(self.right_border) < 0:
-            return self.right_border
-        return self.left_border
+        if self.lhs(self.init_root) * self.lhs(self.rborder) < 0:
+            return self.rborder
+        return self.lborder
 
 
 class NonLinearEquationMethod:
@@ -90,14 +90,14 @@ class NonLinearEquationMethod:
         ----------
         equation : NonLinearEquation
 
-        NonLinearEquation object, with equation left-hand side derivative initialised
+        Obj, with lhs derivative initialised
 
         Returns
         -------
         result : NonLinearEquationResult
 
-        NonLinearEquationResult object, containing the resulting root approximation
-        as well as calculation logs
+        Obj, containing the resulting approximation
+        and calculation logs
         """
         raise NotImplementedError()
 
@@ -108,7 +108,7 @@ class NonLinearEquationMethod:
 
 class Newton(NonLinearEquationMethod):
     """
-    This class encapsulates the solution strategy for non - linear equation using Newton's method
+    Newton's method solution strategy
     """
     @classmethod
     def solve(cls, equation: NonLinearEquation) -> NonLinearEquationResult:
@@ -118,14 +118,14 @@ class Newton(NonLinearEquationMethod):
         Parameters
         ----------
         equation : NonLinearEquation
-        NonLinearEquation object, with equation left-hand side derivative initialised
+        Obj, with lhs derivative initialised
 
         Returns
         -------
         result : NonLinearEquationResult
 
-        NonLinearEquationResult object, containing the resulting root approximation
-        as well as calculation logs
+        Obj, containing the resulting approximation
+        and calculation logs
 
         Examples
         --------
@@ -142,22 +142,24 @@ class Newton(NonLinearEquationMethod):
         def lhs_der_2(x: float) -> float:
             return -sin(x + 2) - 2
 
-        left_border, right_border = 1, 2
-        initial_root_candidate = 1
+        lborder, rborder = 1, 2
+        init_root = 1
 
         equation = NonLinearEquation(
-            lhs, left_border, right_border, initial_root_candidate, lhs_der, lhs_der_2)
+            lhs, lborder, rborder, init_root, lhs_der, lhs_der_2)
 
         result = Newton.solve(equation)
         """
         cls.__initial_root(equation)
 
-        def step(root_candidate):
-            return root_candidate - equation.lhs(root_candidate) / equation.lhs_derivative(root_candidate)
+        def step(approx):
+            return approx - \
+                equation.lhs(approx) / equation.lhs_derivative(approx)
 
-        root = equation.initial_root_candidate
+        root = equation.init_root
         i = 0
         result = NonLinearEquationResult()
+
         while abs(step(root) - root) > equation.delta or equation.lhs(step(root)) > equation.delta:
             result.log.append(
                 f'Iteration number = {i}, current approximation = {root}, error = {equation.lhs(root)}'
@@ -171,13 +173,14 @@ class Newton(NonLinearEquationMethod):
 
     @classmethod
     def __initial_root(cls, equation: NonLinearEquation):
-        if equation.initial_root_candidate is None:
-            if equation.lhs(equation.left_border) * equation.lhs_derivative2(equation.left_border) > 0:
-                equation.initial_root_candidate = equation.left_border
-            elif equation.lhs(equation.right_border) * equation.lhs_derivative2(equation.right_border) > 0:
-                equation.initial_root_candidate = equation.right_border
+        if equation.init_root is None:
+            if equation.lhs(equation.lborder) * equation.lhs_derivative2(equation.lborder) > 0:
+                equation.init_root = equation.lborder
+            elif equation.lhs(equation.rborder) * equation.lhs_derivative2(equation.rborder) > 0:
+                equation.init_root = equation.rborder
             else:
-                equation.initial_root_candidate = (equation.left_border + equation.right_border) / 2
+                equation.init_root = (
+                    equation.lborder + equation.rborder) / 2
 
 
 class Secant(NonLinearEquationMethod):
@@ -221,7 +224,7 @@ class Secant(NonLinearEquationMethod):
         result = Secant.solve(equation)
         """
 
-        x_values = np.linspace(equation.left_border, equation.right_border, min(
+        x_values = np.linspace(equation.lborder, equation.rborder, min(
             int(1. / equation.delta), 10 ** 5))
         min_val, max_val = round(np.min(np.abs(equation.lhs_derivative(x_values))), 6), round(
             np.max(np.abs(equation.lhs_derivative(x_values))), 6)
@@ -233,7 +236,7 @@ class Secant(NonLinearEquationMethod):
 
         i = 0
         cls.__initial_root(equation)
-        root = equation.initial_root_candidate
+        root = equation.init_root
         result = NonLinearEquationResult()
         while abs(step(root) - root) > equation.delta or equation.lhs(step(root)) > equation.delta:
             result.log.append(
@@ -247,9 +250,11 @@ class Secant(NonLinearEquationMethod):
 
     @classmethod
     def __initial_root(cls, equation: NonLinearEquation):
-        if equation.initial_root_candidate is None:
-            equation.initial_root_candidate = (equation.left_border + equation.right_border) / 2
-            equation.initial_root_candidate = (equation.closest_border() + equation.initial_root_candidate) / 2
+        if equation.init_root is None:
+            equation.init_root = (
+                equation.lborder + equation.rborder) / 2
+            equation.init_root = (
+                equation.closest_border() + equation.init_root) / 2
 
 
 class Relaxation(NonLinearEquationMethod):
@@ -264,14 +269,14 @@ class Relaxation(NonLinearEquationMethod):
         Parameters
         ----------
         equation : NonLinearEquation
-        NonLinearEquation object, with equation left-hand side derivative initialised
+        Obj, with lhs derivative initialised
 
         Returns
         -------
         result : NonLinearEquationResult
 
-        NonLinearEquationResult object, containing the resulting root approximation
-        as well as calculation logs
+        Obj, containing the resulting approximation
+        and calculation logs
 
         Examples
         --------
@@ -289,13 +294,14 @@ class Relaxation(NonLinearEquationMethod):
 
         result = Relaxation.solve(equation)
         """
-        root = (equation.closest_border() + equation.initial_root_candidate) / 2
-        previous_root = equation.initial_root_candidate
+        root = (equation.closest_border() +
+                equation.init_root) / 2
+        previous_root = equation.init_root
 
         def step(cur, prev):
             cur, prev = cur - \
-                        equation.lhs(cur) * (cur - prev) / \
-                        (equation.lhs(cur) - equation.lhs(prev)), cur
+                equation.lhs(cur) * (cur - prev) / \
+                (equation.lhs(cur) - equation.lhs(prev)), cur
             return cur, prev
 
         i = 0
@@ -311,6 +317,7 @@ class Relaxation(NonLinearEquationMethod):
 
     @classmethod
     def __initial_root(cls, equation: NonLinearEquation):
-        if equation.initial_root_candidate is None:
-            middle_point = (equation.left_border + equation.right_border) / 2
-            equation.initial_root_candidate = (equation.closest_border() + middle_point) / 2
+        if equation.init_root is None:
+            middle_point = (equation.lborder + equation.rborder) / 2
+            equation.init_root = (
+                equation.closest_border() + middle_point) / 2
