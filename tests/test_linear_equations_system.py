@@ -1,10 +1,10 @@
 import unittest
-from typing import Tuple, List
-from numpy import ndarray
-from numpy import array, empty
-from numpy.testing import assert_almost_equal
+from typing import List, Tuple
+
+from numanalysis.linlag.lineareqsystems import jacobi, square_root_method
+from numpy import array, empty, ndarray
 from numpy.linalg import solve
-from numanalysis.linlag.lineareqsystems import square_root_method, jacobi
+from numpy.testing import assert_almost_equal
 
 
 def _generate_test_system_ndarray(n: int) -> Tuple[ndarray, ndarray]:

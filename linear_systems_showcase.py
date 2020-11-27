@@ -1,10 +1,10 @@
 from typing import Tuple
 
 from numpy import dot, empty, ndarray
-from numpy.linalg.linalg import solve, inv
+from numpy.linalg.linalg import inv, solve
 from numpy.testing import assert_array_almost_equal
 
-from numanalysis.linlag.lineareqsystems import gauss
+from numanalysis.linlag.lineareqsystems import gauss, seidel
 from numanalysis.utilities.util import vector_norm
 
 
@@ -19,12 +19,16 @@ def generate_test_system(n: int) -> Tuple[ndarray, ndarray]:
 
 
 if __name__ == "__main__":
-    n = 2
+
+    n = 10
     matrix, vector = generate_test_system(n)
+
+    # region Gauss
+
     solution, determinant, condition_number, inverse_matrix = gauss(
         matrix, vector, True
     )
-
+    print("Gauss Elimination method")
     print("Linear system of equations solution :")
     print(solution)
 
@@ -47,3 +51,19 @@ if __name__ == "__main__":
     # Solve with numpy
     assert_array_almost_equal(solution, solve(matrix, vector))
     assert_array_almost_equal(dot(matrix, inverse_matrix), dot(matrix, inv(matrix)))
+    # endregion
+
+    # region Seidel
+    tolerance = 1e-6
+    solution, iterations = seidel(matrix, vector, verbose=True)
+    print("Seidel")
+    print("Linear system of equations solution : ")
+    print(solution)
+
+    print(f"Solution achieved with tolerance {tolerance} in {iterations} iterations")
+
+    print("Error of the solution : ")
+    err = vector - dot(matrix, solution)
+    print(err)
+
+    # endregion
