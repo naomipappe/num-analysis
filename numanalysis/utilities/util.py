@@ -1,7 +1,8 @@
 from typing import List, Tuple
 
-from numpy import ndarray, sign, sqrt, zeros, isclose
-from numpy.linalg import inv, det
+import numpy as np
+from numpy import isclose, ndarray, sign, sqrt, zeros
+from numpy.linalg import det, inv
 
 
 def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray]:
@@ -38,7 +39,7 @@ def decompose(matrix: ndarray) -> Tuple[ndarray, ndarray]:
 
 
 def vector_norm(x: ndarray) -> float:
-    return max(abs(x))
+    return np.max(abs(x))
 
 
 def matrix_norm(matrix: ndarray) -> float:
@@ -61,5 +62,5 @@ def input_check(
         raise ValueError("Matrix should be square")
     if vector.ndim != 1 or vector.shape[0] != matrix.shape[0]:
         raise ValueError("Vector should be of vector type and appropriate dimension")
-    if isclose(det(matrix),0):
-        raise ValueError('Matrix should have non-zero determinant')
+    if isclose(det(matrix), 0):
+        raise ValueError("Matrix should have non-zero determinant")

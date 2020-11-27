@@ -1,13 +1,9 @@
-from typing import List, Union, Tuple
+from typing import List, Tuple, Union
 
 import numpy as np
-
-from numanalysis.utilities.util import (
-    decompose,
-    matrix_norm,
-    vector_norm,
-    input_check,
-)
+from numanalysis.utilities.util import (decompose, input_check, matrix_norm,
+                                        vector_norm)
+from numpy.core.defchararray import upper
 
 
 def square_root_method(
@@ -71,11 +67,11 @@ def jacobi(
 
 def gauss(
     matrix: np.ndarray or List[List[float or int]],
-    vector: np.ndarray or List[List[float or int]],
+    vector: np.ndarray or List[float or int],
     verbose: bool = False,
 ) -> Union[np.ndarray, Tuple[np.ndarray, float, float, np.ndarray]]:
     input_check(matrix, vector)
-    
+
     n = matrix.shape[0]
     determinant = 1.0
     identity_matrix = np.identity(n)
@@ -104,7 +100,9 @@ def gauss(
         m_matrix = np.identity(n)
         m_matrix[iteration, iteration] = 1.0 / matrix[iteration, iteration]
         for i in range(iteration + 1, n):
-            m_matrix[i, iteration] = -matrix[i, iteration] / matrix[iteration, iteration]
+            m_matrix[i, iteration] = (
+                -matrix[i, iteration] / matrix[iteration, iteration]
+            )
 
         # Form the new iteration matrix
         matrix = np.dot(m_matrix, matrix)
@@ -114,7 +112,7 @@ def gauss(
     result = vector
     for i in range(n - 1, -1, -1):
         result[i] -= sum(matrix[i, j] * result[j] for j in range(i + 1, n))
-    
+
     if verbose:
         matrix_inverse = np.ndarray(shape=(n, n), dtype=float)
         for iteration in range(n):
@@ -131,3 +129,34 @@ def gauss(
         return result, determinant, condition_number, matrix_inverse
     else:
         return result
+
+
+def seidel(
+    matrix: np.ndarray or List[List[float or int]],
+    vector: np.ndarray or List[float or int],
+    tolerance: float = 1e-4,
+    verbose: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, int]]:
+    def step(result_candidate: np.ndarray) -> np.ndarray:
+        return np.dot(
+            np.linalg.inv(diagonal + lower_triangular),
+            vector - np.dot(upper_triangular, result_candidate),
+        )
+
+    input_check(matrix, vector)
+
+    n = matrix.shape[0]
+
+    lower_triangular = np.tril(matrix, k=-1)
+    upper_triangular = np.triu(matrix, k=1)
+    diagonal = np.diag(np.diag(matrix))
+
+    current_approximation = np.zeros((n,))
+    iteration = 0
+    while vector_norm(step(current_approximation) - current_approximation) > tolerance:
+        current_approximation = step(current_approximation)
+        iteration += 1
+
+    if verbose:
+        return current_approximation, iteration
+    return current_approximation
